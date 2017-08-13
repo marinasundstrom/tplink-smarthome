@@ -3,9 +3,51 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{406987C1-489A-4877-9DC0-DEFACDED44AB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{389E4562-0D29-4D0D-A744-0FDA03D96CEA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartHome", "src\SmartHome\SmartHome.csproj", "{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartHome.Tests", "test\SmartHome.Tests\SmartHome.Tests.csproj", "{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{594AC9D1-C367-41A6-BC44-32714B000961}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SHClient", "sample\SHClient\SHClient.csproj", "{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DE60395D-D1AC-4054-B6B4-2D8CDBE74894}"
+	ProjectSection(SolutionItems) = preProject
+		Commands.txt = Commands.txt
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC} = {406987C1-489A-4877-9DC0-DEFACDED44AB}
+		{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE} = {389E4562-0D29-4D0D-A744-0FDA03D96CEA}
+		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A} = {594AC9D1-C367-41A6-BC44-32714B000961}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4A5DCD13-758B-403F-B6F9-4A28F751D1A0}
