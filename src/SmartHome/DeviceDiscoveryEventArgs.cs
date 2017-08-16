@@ -8,7 +8,7 @@ namespace SmartHome
     {
         public DeviceDiscoveryEventArgs(Device device)
         {
-            this.Device = device;
+            Device = device;
         }
 
         public Device Device { get; set; }

@@ -3,11 +3,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using SmartHome.Devices;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
+using static SmartHome.CommandHelper;
 using System.Threading.Tasks;
 
 namespace SmartHome
@@ -52,7 +48,7 @@ namespace SmartHome
 
         internal void UpdateInternal(JObject obj)
         {
-            this.Update(obj);
+            Update(obj);
         }
 
         protected virtual void Update(JObject obj)
@@ -67,7 +63,7 @@ namespace SmartHome
             }
             HardwareVersion = obj.Value<string>("sw_ver");
             SoftwareVersion = obj.Value<string>("hw_ver");
-            MAC = GetMACAddress(obj);
+            MAC = ParserHelpers.GetMACAddress(obj);
             DeviceId = obj.Value<string>("deviceId");
             HardwareId = obj.Value<string>("hwId");
             FirmwareId = obj.Value<string>("fwId");
@@ -78,44 +74,11 @@ namespace SmartHome
             IsUpdating = Convert.ToBoolean(obj.Value<int>("updating"));
         }
 
-        internal static string GetMACAddress(JObject obj)
-        {
-            var result = obj.Value<string>("mac");
-            if (result == null)
-            {
-                result = obj.Value<string>("mic_mac");
-            }
-            return result;
-        }
-
         public async Task FetchStateAsync()
         {
-            var obj = Commands.GetSysInfo;
-            var str = await SendCommand(obj);
+            var results = await SendCommand(Commands.GetSysInfo);
 
-            Update(JObject.Parse(str));
-        }
-
-        protected async Task<string> SendCommand(string request)
-        {
-            var enc = Encoding.UTF8.GetBytes(request);
-            var data = Utils.Encrypt(enc);
-
-            var results = await Send(data);
-
-            var data2 = Utils.Decrypt(results);
-            return Encoding.UTF8.GetString(data2);
-        }
-
-        protected async Task<byte[]> Send(byte[] data)
-        {
-            using (var client = new UdpClient(9998))
-            {
-                var remoteEp = new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), 9999);
-                await client.SendAsync(data, data.Length, remoteEp);
-                var dataReceived = client.Receive(ref remoteEp);
-                return dataReceived.ToArray();
-            }
+            Update(JObject.Parse(results));
         }
 
         public static Device FromJson(JObject obj)
@@ -150,6 +113,13 @@ namespace SmartHome
         public Task SetIdAsync(string id)
         {
             return SendCommand(Commands.SetDeviceId(id));
+        }
+
+        protected Task<string> SendCommand(string command)
+        {
+            return CommandHelper.SendCommand(
+                System.Net.IPAddress.Parse(IPAddress),
+                command);
         }
     }
 

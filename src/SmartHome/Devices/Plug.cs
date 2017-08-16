@@ -13,11 +13,6 @@ namespace SmartHome.Devices
             Type = DeviceType.Plug;
         }
 
-        protected override void Update(JObject obj)
-        {
-            base.Update(obj);
-        }
-
         public async Task<SwitchState> GetRelayStateAsync()
         {
             var message = Commands.GetSysInfo;
@@ -33,7 +28,8 @@ namespace SmartHome.Devices
 
         public Task SetRelayStateAsync(SwitchState state)
         {
-            return SendCommand(Commands.SetRelayState(state == SwitchState.On ? true : false));
+            return SendCommand(
+                Commands.SetRelayState(state == SwitchState.On));
         }
     }
 }

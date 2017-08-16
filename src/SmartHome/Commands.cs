@@ -22,12 +22,16 @@ namespace SmartHome
             }
         });
 
-        public static string TransitionLightState(bool state, int transitionPeriod) => "{ \"smartlife.iot.smartbulb.lightingservice\": " + JsonConvert.SerializeObject(new
+        public static string TransitionLightState(bool state, int transitionPeriod, int hue = 0, int saturation = 0, int colorTemp = 2700, int brightness = 0) => "{ \"smartlife.iot.smartbulb.lightingservice\": " + JsonConvert.SerializeObject(new
         {
             transition_light_state = new
             {
                 on_off = state ? 1 : 0,
-                transition_period = transitionPeriod
+                transition_period = transitionPeriod,
+                hue = hue,
+                saturation = saturation,
+                color_temp = colorTemp,
+                brightness = brightness
             }
         }) + " }";
 

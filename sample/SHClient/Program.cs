@@ -2,20 +2,21 @@
 using SmartHome;
 using SmartHome.Devices;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SHClient
 {
     class Program
     {
-        static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            //Test();
-
-            MainAsync().Wait();
+            //await Main2();
+            Test();
+            //await Test2();
         }
 
-        private static async Task MainAsync()
+        private static async Task Main2()
         {
             using (var client = new SmartHomeClient())
             {
@@ -34,9 +35,11 @@ namespace SHClient
                     {
                         if (device is LightBulb lb)
                         {
-                            await lb.SetTransitionStateAsync(command == "X" ? SwitchState.On : SwitchState.Off, 0);
+                            var state = string.Equals(command, "x", StringComparison.CurrentCultureIgnoreCase) ? SwitchState.On : SwitchState.Off;
 
-                            var state = await lb.GetStateAsync();
+                            await lb.TransitionStateAsync(state);
+
+                            state = await lb.GetStateAsync();
 
                             Console.WriteLine($"{lb.Alias} ({lb.DeviceId}): {state}");
                         }
@@ -49,12 +52,41 @@ namespace SHClient
         {
             using (var client = new SmartHomeClient())
             {
-                client.DeviceDiscovered += async (s, e) =>
+                client.DeviceDiscovered += (s, e) =>
                 {
+                    //Console.WriteLine($"{DateTime.Now}: {e.Device.DeviceId}");
                     Console.WriteLine(JsonConvert.SerializeObject(e.Device, Formatting.Indented));
                     Console.WriteLine();
                 };
                 client.Start();
+
+                Console.WriteLine("Press any key to exit...");
+                Console.Read();
+            }
+        }
+
+        async static Task Test2()
+        {
+            using (var client = new SmartHomeClient())
+            {
+                client.Start();
+
+                await Task.Delay(1000);
+
+                var devices = client
+                       .GetDevices();
+                var bulb = devices.OfType<LightBulb>().First();
+
+                while (true)
+                {
+                    Console.Write($"Brightness ({bulb.Parameters.Brightness}): ");
+                    var value = Console.ReadLine();
+                    if(value.ToLower() == "exit") break;
+                    await bulb.TransitionStateAsync(SwitchState.On, brightness: int.Parse(value));
+                    Console.Clear();
+                }
+
+                await bulb.TransitionStateAsync(SwitchState.Off);
 
                 Console.WriteLine("Press any key to exit...");
                 Console.Read();

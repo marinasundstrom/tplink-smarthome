@@ -28,7 +28,7 @@ namespace SmartHome
 
         public IEnumerable<Device> GetDevices()
         {
-            return this.devices.Select(x => x.Value);
+            return devices.Select(x => x.Value);
         }
 
         private IPEndPoint multicastEp;
@@ -52,16 +52,16 @@ namespace SmartHome
 
         private void Initialize()
         {
-            this.multicastAddress = IPAddress.Broadcast;
-            this.multicastPort = 9999;
-            this.multicastEp = new IPEndPoint(multicastAddress, multicastPort);
-            this.localEp = new IPEndPoint(IPAddress.Any, multicastPort);
+            multicastAddress = IPAddress.Broadcast;
+            multicastPort = 9999;
+            multicastEp = new IPEndPoint(multicastAddress, multicastPort);
+            localEp = new IPEndPoint(IPAddress.Any, multicastPort);
 
-            this.socket = CreateSocket(localEp);
+            socket = CreateSocket(localEp);
 
-            this.devices = new Dictionary<string, Device>();
-            this.timer = new System.Timers.Timer(DiscoveryRate.TotalMilliseconds);
-            this.timer.Elapsed += (s, e) =>
+            devices = new Dictionary<string, Device>();
+            timer = new System.Timers.Timer(DiscoveryRate.TotalMilliseconds);
+            timer.Elapsed += (s, e) =>
             {
                 Scan();
             };
@@ -73,8 +73,8 @@ namespace SmartHome
             StartScannerThread();
             Scan();
 
-            this.isRunning = true;
-            this.timer.Start();
+            isRunning = true;
+            timer.Start();
         }
 
         private void StartScannerThread()
@@ -97,7 +97,7 @@ namespace SmartHome
 
                         if (obj == null) continue;
 
-                        var macAddress = Device.GetMACAddress(obj);
+                        var macAddress = ParserHelpers.GetMACAddress(obj);
 
                         if (!devices.TryGetValue(macAddress, out var device))
                         {
@@ -105,7 +105,6 @@ namespace SmartHome
 
                             device = Device.FromJson(obj);
                             device.IPAddress = ((IPEndPoint)localEp).Address.ToString();
-
                             devices.Add(macAddress, device);
 
                             DeviceDiscovered?.Invoke(this, new DeviceDiscoveryEventArgs(device));
@@ -125,10 +124,10 @@ namespace SmartHome
 
         public void Stop()
         {
-            this.timer.Stop();
-            this.socket.Close();
-            this.cancellationTokenSource.Cancel();
-            this.isRunning = false;
+            timer.Stop();
+            socket.Close();
+            cancellationTokenSource.Cancel();
+            isRunning = false;
         }
 
         public void Scan()
