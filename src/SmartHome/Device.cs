@@ -3,8 +3,9 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using SmartHome.Devices;
 using System;
-using static SmartHome.CommandHelper;
+using static SmartHome.ParserHelpers;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace SmartHome
 {
@@ -40,7 +41,7 @@ namespace SmartHome
 
         public string OEMId { get; protected set; }
 
-        public string IPAddress { get; internal set; }
+        public IPAddress IPAddress { get; internal set; }
 
         public int RSSI { get; private set; }
 
@@ -63,7 +64,7 @@ namespace SmartHome
             }
             HardwareVersion = obj.Value<string>("sw_ver");
             SoftwareVersion = obj.Value<string>("hw_ver");
-            MAC = ParserHelpers.GetMACAddress(obj);
+            MAC = GetMACAddress(obj);
             DeviceId = obj.Value<string>("deviceId");
             HardwareId = obj.Value<string>("hwId");
             FirmwareId = obj.Value<string>("fwId");
@@ -74,11 +75,12 @@ namespace SmartHome
             IsUpdating = Convert.ToBoolean(obj.Value<int>("updating"));
         }
 
-        public async Task FetchStateAsync()
+        public async Task FetchAsync()
         {
-            var results = await SendCommand(Commands.GetSysInfo);
+            var str = await SendCommand(Commands.GetSysInfo);
+            var obj = ParseGetSysInfo(str);
 
-            Update(JObject.Parse(results));
+            UpdateInternal(obj);
         }
 
         public static Device FromJson(JObject obj)
@@ -118,7 +120,7 @@ namespace SmartHome
         protected Task<string> SendCommand(string command)
         {
             return CommandHelper.SendCommand(
-                System.Net.IPAddress.Parse(IPAddress),
+                IPAddress,
                 command);
         }
     }

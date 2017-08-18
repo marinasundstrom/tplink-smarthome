@@ -1,19 +1,58 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.CommandLineUtils;
+using Newtonsoft.Json;
 using SmartHome;
 using SmartHome.Devices;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace SHClient
 {
-    class Program
+    static class Program
     {
-        private static async Task Main(string[] args)
+        private static int Main(string[] args)
         {
-            //await Main2();
-            Test();
-            //await Test2();
+            var app = new CommandLineApplication();
+            app.Command("bulb", (command) =>
+            {
+                command.Description = "Control a Smart Home bulb.";
+                command.HelpOption("-?|-h|--help");
+
+                var targetArgument = command.Argument("[target]",
+                                        "The address of the bulb to control.");
+
+                var stateOption = command.Option("-s|--state",
+                                        "Sets the on/off state of the light bulb.", CommandOptionType.SingleValue);
+
+                var brightnessOption = command.Option("-b|--brightness",
+                                        "Sets the brightness of the light bulb.", CommandOptionType.SingleValue);
+
+                command.OnExecute(async () =>
+                {
+                    var address = IPAddress.Parse(targetArgument.Value);
+
+                    var state = new LightBulbState();
+
+                    SwitchState desiredState = SwitchState.Off;
+                    int desiredBrightness = 0;
+
+                    if(Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
+                    {
+                        state.OnOff = desiredState;
+                    }
+                    if(int.TryParse(brightnessOption.Value(), out desiredBrightness))
+                    {
+                        state.Brightness = desiredBrightness;
+                    }
+
+                    var bulb = new LightBulb(address);
+                    //await bulb.FetchAsync();
+                    await bulb.TransitionStateAsync(state);
+                    return 0;
+                });
+            });
+            return app.Execute(args);
         }
 
         private static async Task Main2()
@@ -82,7 +121,10 @@ namespace SHClient
                     Console.Write($"Brightness ({bulb.Parameters.Brightness}): ");
                     var value = Console.ReadLine();
                     if(value.ToLower() == "exit") break;
-                    await bulb.TransitionStateAsync(SwitchState.On, brightness: int.Parse(value));
+                    await bulb.TransitionStateAsync(new LightBulbState() {
+                        OnOff = SwitchState.On,
+                        Brightness = int.Parse(value)
+                    });
                     Console.Clear();
                 }
 
@@ -91,6 +133,46 @@ namespace SHClient
                 Console.WriteLine("Press any key to exit...");
                 Console.Read();
             }
+        }
+
+        async static Task Test3()
+        {
+            using (var client = new SmartHomeClient())
+            {
+                client.Start();
+
+                await Task.Delay(1000);
+
+                var devices = client
+                       .GetDevices();
+                var bulb = devices.OfType<Plug>().First();
+
+                while (true)
+                {
+                    Console.Write($"State ({await bulb.GetRelayStateAsync()}): ");
+                    var value = Console.ReadLine();
+                    if (value.ToLower() == "exit") break;
+                    if (bool.TryParse(value, out var flag))
+                    {
+                        await bulb.SetRelayStateAsync(flag ? SwitchState.On: SwitchState.Off);
+                    }
+                    Console.Clear();
+                }
+
+                await bulb.SetRelayStateAsync(SwitchState.Off);
+
+                Console.WriteLine("Press any key to exit...");
+                Console.Read();
+            }
+        }
+
+        async static Task Test4(string[] args)
+        {
+            var desiredState = Enum.Parse<SwitchState>(args[0], true);
+
+            var bulb = new LightBulb(IPAddress.Parse("192.168.1.7"));
+            //await bulb.FetchAsync();
+            await bulb.TransitionStateAsync(desiredState);
         }
     }
 }

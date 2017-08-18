@@ -52,5 +52,31 @@ namespace SmartHome
                 return obj;
             }
         }
+
+        public static JObject ParseSmartBulbTransitionLightStateResponse(string input)
+        {
+            var obj = JObject.Parse(input)?
+                                .Value<JObject>("smartlife.iot.smartbulb.lightingservice")?
+                                .Value<JObject>("transition_light_state");
+
+            if (obj?.IsNullOrEmpty() ?? false)
+            {
+                return null;
+            }
+            else
+            {
+                return obj;
+            }
+        }
+
+        public static int GetErrorCode(JObject obj)
+        {
+            int code = 0;
+            if (obj.TryGetValue("error_code", out var token))
+            {
+                code = token.Value<int>();
+            }
+            return code;
+        }
     }
 }

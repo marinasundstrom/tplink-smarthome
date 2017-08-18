@@ -11,3 +11,19 @@ More on Smart Home: http://www.tp-link.com/us/home-networking/smart-home/.
 Currently, there is basic support for these types of devices:
 * Smart Plugs
 * Smart Bulbs
+
+## SHClient
+The solution includes a sample CLI.
+
+```sh
+$ dotnet run bulb <ip address> [-s <On|Off>] [-b <0-100>]
+```
+
+
+Options
+
+```
+--state | -s <On|Off>
+--brightness | -b
+--help | -h 
+```

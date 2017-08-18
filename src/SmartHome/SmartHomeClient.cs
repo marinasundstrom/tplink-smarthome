@@ -36,7 +36,7 @@ namespace SmartHome
 
         public SmartHomeClient()
         {
-            DiscoveryRate = TimeSpan.FromSeconds(10);
+            DiscoveryRate = TimeSpan.FromSeconds(30);
         }
 
         public static Socket CreateSocket(EndPoint localEp)
@@ -104,7 +104,7 @@ namespace SmartHome
                             Debug.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
 
                             device = Device.FromJson(obj);
-                            device.IPAddress = ((IPEndPoint)localEp).Address.ToString();
+                            device.IPAddress = ((IPEndPoint)localEp).Address;
                             devices.Add(macAddress, device);
 
                             DeviceDiscovered?.Invoke(this, new DeviceDiscoveryEventArgs(device));

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,18 +23,40 @@ namespace SmartHome
             }
         });
 
-        public static string TransitionLightState(bool state, int transitionPeriod, int hue = 0, int saturation = 0, int colorTemp = 2700, int brightness = 0) => "{ \"smartlife.iot.smartbulb.lightingservice\": " + JsonConvert.SerializeObject(new
+        public static string TransitionLightState(bool? onOffState = null, int? transitionPeriod = null, int? hue = null, int? saturation = null, int? colorTemp = null, int? brightness = null)
         {
-            transition_light_state = new
+            var obj = new JObject();
+            var obj2 = new JObject();
+            if (onOffState != null)
             {
-                on_off = state ? 1 : 0,
-                transition_period = transitionPeriod,
-                hue = hue,
-                saturation = saturation,
-                color_temp = colorTemp,
-                brightness = brightness
+                obj2["on_off"] = onOffState ?? false ? 1 : 0;
             }
-        }) + " }";
+            if (transitionPeriod != null)
+            {
+                obj2["transition_period"] = transitionPeriod;
+            }
+            if (hue != null)
+            {
+                obj2["hue"] = hue;
+            }
+            if (saturation != null)
+            {
+                obj2["saturation"] = saturation;
+            }
+            if (colorTemp != null)
+            {
+                obj2["color_temp"] = colorTemp;
+            }
+            if (brightness != null)
+            {
+                obj2["brightness"] = brightness;
+            }
+            obj["transition_light_state"] = obj2;
+            var obj3 = new JObject();
+            obj3["smartlife.iot.smartbulb.lightingservice"] = obj;
+
+            return obj3.ToString(Formatting.None);
+        }
 
         public static string SetDeviceAlias(string alias) => JsonConvert.SerializeObject(new
         {

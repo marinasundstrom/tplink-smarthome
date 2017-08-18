@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SmartHome.Devices
+﻿namespace SmartHome.Devices
 {
     public enum DeviceType
     {

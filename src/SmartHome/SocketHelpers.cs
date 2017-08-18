@@ -13,6 +13,7 @@ namespace SmartHome
         {
             using (var client = new UdpClient(9998))
             {
+                client.MulticastLoopback = false;
                 var remoteEp = new IPEndPoint(ipAddress, 9999);
                 await client.SendAsync(data, data.Length, remoteEp);
                 return client.Receive(ref remoteEp);
