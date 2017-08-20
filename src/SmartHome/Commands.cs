@@ -8,9 +8,41 @@ namespace SmartHome
 {
     static class Commands
     {
-        public static readonly string GetSysInfo = "{\"system\":{\"get_sysinfo\":{}}}";
+        private static string getSysInfo;
+        private static string getSysInfo2;
 
-        public static readonly string GetSysInfo2 = "{\"emeter\":{\"get_realtime\":{}}, \"system\":{\"get_sysinfo\":{}}}";
+        public static string GetSysInfo => getSysInfo ?? (getSysInfo = JsonConvert.SerializeObject(
+            new
+            {
+                system = new
+                {
+                    get_sysinfo = new
+                    {
+
+                    }
+                }
+            }
+        ));
+
+        public static string GetSysInfo2 => getSysInfo2 ?? (getSysInfo2 = JsonConvert.SerializeObject(
+            new
+            {
+                system = new
+                {
+                    emeter = new
+                    {
+                        get_realtime = new
+                        {
+
+                        }
+                    },
+                    get_sysinfo = new
+                    {
+
+                    }
+                }
+            }
+        ));
 
         public static string SetRelayState(bool state) => JsonConvert.SerializeObject(new
         {
@@ -23,7 +55,13 @@ namespace SmartHome
             }
         });
 
-        public static string TransitionLightState(bool? onOffState = null, int? transitionPeriod = null, int? hue = null, int? saturation = null, int? colorTemp = null, int? brightness = null)
+        public static string TransitionLightState(
+            bool? onOffState = null,
+            int? transitionPeriod = null,
+            int? hue = null,
+            int? saturation = null,
+            int? colorTemp = null,
+            int? brightness = null)
         {
             var obj = new JObject();
             var obj2 = new JObject();

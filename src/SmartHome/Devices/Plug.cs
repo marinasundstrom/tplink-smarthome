@@ -38,10 +38,6 @@ namespace SmartHome.Devices
         {
             var result = await SendCommand(
                 Commands.SetRelayState(state == SwitchState.On));
-
-            var obj = ParseSmartBulbTransitionLightStateResponse(result);
-
-            //UpdateBulbState(obj);
         }
     }
 }

@@ -33,39 +33,40 @@ namespace SmartHome.Devices
         {
             //var state = obj.Value<JObject>("dft_on_state");
 
-            var p = Parameters ?? new LightParameters();
+            var p = State ?? new LightBulbState();
 
             p.Mode = obj.Value<string>("mode");
+            p.PowerState = (SwitchState)obj.Value<int>("on_off");
             p.Hue = obj.Value<int>("hue");
             p.Saturation = obj.Value<int>("saturation");
             p.ColorTemp = obj.Value<int>("color_temp");
             p.Brightness = obj.Value<int>("brightness");
 
-            Parameters = p;
+            State = p;
         }
 
-        public Task TransitionStateAsync(SwitchState onOff, int transitionPeriod = 0)
+        public Task TransitionStateAsync(SwitchState powerState, int transitionPeriod = 0)
         {
-            var state = new LightBulbState()
+            var state = new RequestedState()
             {
-                OnOff = onOff
+                PowerState = powerState
             };
             return TransitionStateAsync(state, transitionPeriod);
         }
 
-        public async Task TransitionStateAsync(LightBulbState state, int transitionPeriod = 0)
+        public async Task TransitionStateAsync(RequestedState state, int transitionPeriod = 0)
         {
             if (IsDimmable != null && !(bool)IsDimmable)
             {
                 throw new NotSupportedException("Light bulb is not dimmable.s");
             }
-            bool? onOff = null;
-            if(state.OnOff != null)
+            bool? powerState = null;
+            if(state.PowerState != null)
             {
-                onOff = state.OnOff == SwitchState.On ? true : false;
+                powerState = state.PowerState == SwitchState.On ? true : false;
             }
             var result = await SendCommand(
-                Commands.TransitionLightState(onOff, transitionPeriod, state.Hue, state.Saturation, state.ColorTemp, state.Brightness));
+                Commands.TransitionLightState(powerState, transitionPeriod, state.Hue, state.Saturation, state.ColorTemp, state.Brightness));
 
             var obj = ParseSmartBulbTransitionLightStateResponse(result);
 
@@ -74,16 +75,14 @@ namespace SmartHome.Devices
             UpdateBulbState(obj);
         }
 
-        public async Task<SwitchState> GetStateAsync()
+        public async Task<LightBulbState> GetStateAsync()
         {
             var str = await SendCommand(Commands.GetSysInfo);
             var obj = ParseGetSysInfo(str);
 
             UpdateInternal(obj);
 
-            return (SwitchState)obj
-                .Value<JObject>("light_state")
-                .Value<int>("on_off");
+            return State;
         }
 
         public bool? IsDimmable { get; private set; }
@@ -92,12 +91,12 @@ namespace SmartHome.Devices
 
         public bool? IsVariableColorTemp { get; private set; }
 
-        public LightParameters Parameters { get; private set; }
+        public LightBulbState State { get; private set; }
     }
 
-    public class LightBulbState
+    public struct RequestedState
     {
-        public SwitchState? OnOff { get; set; }
+        public SwitchState? PowerState { get; set; }
         public int? Brightness { get; set; }
         public int? Hue { get; set; }
         public int? Saturation { get; set; }
@@ -105,9 +104,10 @@ namespace SmartHome.Devices
     }
 
 
-    public class LightParameters
+    public class LightBulbState
     {
         public string Mode { get; internal set; }
+        public SwitchState PowerState { get; internal set; }
         public int Hue { get; internal set; }
         public int Saturation { get; internal set; }
         public int ColorTemp { get; internal set; }

@@ -14,7 +14,7 @@ namespace SHClient
         private static int Main(string[] args)
         {
             var app = new CommandLineApplication();
-            app.Command("bulb", (command) =>
+            app.Command("bulb", (Action<CommandLineApplication>)((command) =>
             {
                 command.Description = "Control a Smart Home bulb.";
                 command.HelpOption("-?|-h|--help");
@@ -28,18 +28,18 @@ namespace SHClient
                 var brightnessOption = command.Option("-b|--brightness",
                                         "Sets the brightness of the light bulb.", CommandOptionType.SingleValue);
 
-                command.OnExecute(async () =>
+                command.OnExecute((Func<Task<int>>)(async () =>
                 {
                     var address = IPAddress.Parse(targetArgument.Value);
 
-                    var state = new LightBulbState();
+                    var state = new SmartHome.Devices.RequestedState();
 
                     SwitchState desiredState = SwitchState.Off;
                     int desiredBrightness = 0;
 
                     if(Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
                     {
-                        state.OnOff = desiredState;
+                        state.PowerState = desiredState;
                     }
                     if(int.TryParse(brightnessOption.Value(), out desiredBrightness))
                     {
@@ -48,10 +48,10 @@ namespace SHClient
 
                     var bulb = new LightBulb(address);
                     //await bulb.FetchAsync();
-                    await bulb.TransitionStateAsync(state);
+                    await bulb.TransitionStateAsync((RequestedState)state);
                     return 0;
-                });
-            });
+                }));
+            }));
             return app.Execute(args);
         }
 
@@ -78,9 +78,9 @@ namespace SHClient
 
                             await lb.TransitionStateAsync(state);
 
-                            state = await lb.GetStateAsync();
+                            var state2 = await lb.GetStateAsync();
 
-                            Console.WriteLine($"{lb.Alias} ({lb.DeviceId}): {state}");
+                            Console.WriteLine($"{lb.Alias} ({lb.DeviceId}): {state2.PowerState}");
                         }
                     }
                 }
@@ -118,11 +118,11 @@ namespace SHClient
 
                 while (true)
                 {
-                    Console.Write($"Brightness ({bulb.Parameters.Brightness}): ");
+                    Console.Write($"Brightness ({bulb.State.Brightness}): ");
                     var value = Console.ReadLine();
                     if(value.ToLower() == "exit") break;
-                    await bulb.TransitionStateAsync(new LightBulbState() {
-                        OnOff = SwitchState.On,
+                    await bulb.TransitionStateAsync(new RequestedState() {
+                        PowerState = SwitchState.On,
                         Brightness = int.Parse(value)
                     });
                     Console.Clear();
