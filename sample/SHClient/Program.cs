@@ -83,8 +83,14 @@ namespace SHClient
                 command.Description = "Watches for Smart Home devices on the network.";
                 command.HelpOption("-?|-h|--help");
 
+                /*
                 var stateOption = command.Option("-f|--filter",
                                         "Sets the filter.", CommandOptionType.SingleValue);
+                */
+                
+                var jsonOption = command.Option("--json",
+                                        "Output device info in JSON.", CommandOptionType.NoValue);
+
 
                 command.OnExecute((Func<Task<int>>)(async () =>
                 {
@@ -92,9 +98,14 @@ namespace SHClient
                     {
                         client.DeviceDiscovered += (s, e) =>
                         {
-                            //Console.WriteLine($"{DateTime.Now}: {e.Device.DeviceId}");
-                            Console.WriteLine(JsonConvert.SerializeObject(e.Device, Formatting.Indented));
-                            Console.WriteLine();
+                            if(jsonOption.HasValue()) {
+                                 Console.WriteLine(JsonConvert.SerializeObject(e.Device, Formatting.Indented));
+                                Console.WriteLine();
+                            } 
+                            else 
+                            {
+                                Console.WriteLine($"{e.Device.Type, -20}{e.Device.Alias, -20}{e.Device.IPAddress} ");
+                            }
                         };
                         client.Start();
 
