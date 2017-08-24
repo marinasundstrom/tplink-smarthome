@@ -14,6 +14,32 @@ namespace SHClient
         private static int Main(string[] args)
         {
             var app = new CommandLineApplication();
+            app.Command("plug", (Action<CommandLineApplication>)((command) =>
+            {
+                command.Description = "Control a Smart Home plug.";
+                command.HelpOption("-?|-h|--help");
+
+                var targetArgument = command.Argument("[target]",
+                                        "The address of the plug to control.");
+
+                var stateOption = command.Option("-s|--state",
+                                        "Sets the on/off state of the plug.", CommandOptionType.SingleValue);
+
+                command.OnExecute((Func<Task<int>>)(async () =>
+                {
+                    var address = IPAddress.Parse(targetArgument.Value);
+
+                    SwitchState desiredState = SwitchState.Off;
+
+                    if (Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
+                    {
+                        var plug = new Plug(address);
+                        //await plug.FetchAsync();
+                        await plug.SetRelayStateAsync(desiredState);
+                    }
+                    return 0;
+                }));
+            }));
             app.Command("bulb", (Action<CommandLineApplication>)((command) =>
             {
                 command.Description = "Control a Smart Home bulb.";
@@ -37,11 +63,11 @@ namespace SHClient
                     SwitchState desiredState = SwitchState.Off;
                     int desiredBrightness = 0;
 
-                    if(Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
+                    if (Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
                     {
                         state.PowerState = desiredState;
                     }
-                    if(int.TryParse(brightnessOption.Value(), out desiredBrightness))
+                    if (int.TryParse(brightnessOption.Value(), out desiredBrightness))
                     {
                         state.Brightness = desiredBrightness;
                     }
@@ -49,6 +75,31 @@ namespace SHClient
                     var bulb = new LightBulb(address);
                     //await bulb.FetchAsync();
                     await bulb.TransitionStateAsync((RequestedState)state);
+                    return 0;
+                }));
+            }));
+            app.Command("discover", (Action<CommandLineApplication>)((command) =>
+            {
+                command.Description = "Watches for Smart Home devices on the network.";
+                command.HelpOption("-?|-h|--help");
+
+                var stateOption = command.Option("-f|--filter",
+                                        "Sets the filter.", CommandOptionType.SingleValue);
+
+                command.OnExecute((Func<Task<int>>)(async () =>
+                {
+                    using (var client = new SmartHomeClient())
+                    {
+                        client.DeviceDiscovered += (s, e) =>
+                        {
+                            //Console.WriteLine($"{DateTime.Now}: {e.Device.DeviceId}");
+                            Console.WriteLine(JsonConvert.SerializeObject(e.Device, Formatting.Indented));
+                            Console.WriteLine();
+                        };
+                        client.Start();
+
+                        while (true) await Task.Delay(1000);
+                    }
                     return 0;
                 }));
             }));
@@ -120,8 +171,9 @@ namespace SHClient
                 {
                     Console.Write($"Brightness ({bulb.State.Brightness}): ");
                     var value = Console.ReadLine();
-                    if(value.ToLower() == "exit") break;
-                    await bulb.TransitionStateAsync(new RequestedState() {
+                    if (value.ToLower() == "exit") break;
+                    await bulb.TransitionStateAsync(new RequestedState()
+                    {
                         PowerState = SwitchState.On,
                         Brightness = int.Parse(value)
                     });
@@ -154,7 +206,7 @@ namespace SHClient
                     if (value.ToLower() == "exit") break;
                     if (bool.TryParse(value, out var flag))
                     {
-                        await bulb.SetRelayStateAsync(flag ? SwitchState.On: SwitchState.Off);
+                        await bulb.SetRelayStateAsync(flag ? SwitchState.On : SwitchState.Off);
                     }
                     Console.Clear();
                 }
