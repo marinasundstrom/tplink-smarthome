@@ -41,6 +41,7 @@ namespace SmartHome
 
         public string OEMId { get; protected set; }
 
+        [JsonConverter(typeof(IPAddressConverter))]
         public IPAddress IPAddress { get; internal set; }
 
         public int RSSI { get; private set; }
