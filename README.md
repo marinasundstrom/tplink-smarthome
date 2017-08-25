@@ -15,10 +15,24 @@ Currently, there is basic support for these types of devices:
 ## SHClient
 The solution includes a sample CLI.
 
+### Plug
+
+```sh
+$ dotnet run plug <ip address> [-s <On|Off>]
+```
+
+Options
+
+```
+--state | -s <On|Off>
+--help | -h 
+```
+
+### Bulb
+
 ```sh
 $ dotnet run bulb <ip address> [-s <On|Off>] [-b <0-100>]
 ```
-
 
 Options
 
@@ -26,4 +40,16 @@ Options
 --state | -s <On|Off>
 --brightness | -b
 --help | -h 
+```
+
+### Discover
+
+```sh
+$ dotnet run discover [--json]
+```
+
+Options
+
+```
+--json
 ```
