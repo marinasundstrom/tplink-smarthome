@@ -11,7 +11,13 @@ namespace SmartHome.Devices
 {
     public sealed class Plug : Device
     {
+
         internal Plug()
+        {
+            Type = DeviceType.Plug;
+        }
+
+        internal Plug(SmartHomeClient client) : base(client)
         {
             Type = DeviceType.Plug;
         }
@@ -21,23 +27,22 @@ namespace SmartHome.Devices
             IPAddress = address;
         }
 
-        public async Task<SwitchState> GetRelayStateAsync()
+        public SwitchState RelayState { get; private set; }
+
+        protected override void Update(JObject obj)
         {
-            var message = Commands.GetSysInfo;
-            var str = await SendCommand(message);
+            base.Update(obj);
 
-            var obj = ParseGetSysInfo(str);
-
-            UpdateInternal(obj);
-
-            return (SwitchState)obj
+            RelayState = (SwitchState)obj
                 .Value<int>("relay_state");
         }
 
         public async Task SetRelayStateAsync(SwitchState state)
         {
-            var result = await SendCommand(
+            await SendCommand(
                 Commands.SetRelayState(state == SwitchState.On));
+            RelayState = state;
+            OnUpdated();
         }
     }
 }

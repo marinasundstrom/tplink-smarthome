@@ -87,7 +87,7 @@ namespace SHClient
                 var stateOption = command.Option("-f|--filter",
                                         "Sets the filter.", CommandOptionType.SingleValue);
                 */
-                
+
                 var jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
@@ -98,20 +98,24 @@ namespace SHClient
                     {
                         client.DeviceDiscovered += (s, e) =>
                         {
-                            if(jsonOption.HasValue()) {
-                                 Console.WriteLine(JsonConvert.SerializeObject(e.Device, Formatting.Indented));
-                                Console.WriteLine();
-                            } 
-                            else 
+                            if (jsonOption.HasValue())
                             {
-                                Console.WriteLine($"{e.Device.Type, -20}{e.Device.Alias, -20}{e.Device.IPAddress} ");
+                                Console.WriteLine(JsonConvert.SerializeObject(e.Device, Formatting.Indented));
+                                Console.WriteLine();
                             }
+                            else
+                            {
+                                Console.WriteLine($"{e.Device.Type,-20}{e.Device.Alias,-20}{e.Device.IPAddress} ");
+                            }
+                        };
+                        client.DeviceUpdated += (s, e) =>
+                        {
+                            Console.WriteLine($"Device updated: {e.Device.Alias}");
                         };
                         client.Start();
 
                         while (true) await Task.Delay(1000);
                     }
-                    return 0;
                 }));
             }));
             return app.Execute(args);
@@ -140,7 +144,7 @@ namespace SHClient
 
                             await lb.TransitionStateAsync(state);
 
-                            var state2 = await lb.GetStateAsync();
+                            var state2 = lb.State;
 
                             Console.WriteLine($"{lb.Alias} ({lb.DeviceId}): {state2.PowerState}");
                         }
@@ -182,7 +186,7 @@ namespace SHClient
                 {
                     Console.Write($"Brightness ({bulb.State.Brightness}): ");
                     var value = Console.ReadLine();
-                    if (value.ToLower() == "exit") break;
+                    if (string.Equals(value, "exit", StringComparison.CurrentCultureIgnoreCase)) break;
                     await bulb.TransitionStateAsync(new RequestedState()
                     {
                         PowerState = SwitchState.On,
@@ -212,9 +216,9 @@ namespace SHClient
 
                 while (true)
                 {
-                    Console.Write($"State ({await bulb.GetRelayStateAsync()}): ");
+                    Console.Write($"State ({bulb.RelayState}): ");
                     var value = Console.ReadLine();
-                    if (value.ToLower() == "exit") break;
+                    if (string.Equals(value, "exit", StringComparison.CurrentCultureIgnoreCase)) break;
                     if (bool.TryParse(value, out var flag))
                     {
                         await bulb.SetRelayStateAsync(flag ? SwitchState.On : SwitchState.Off);

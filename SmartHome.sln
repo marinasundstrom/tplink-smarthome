@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.0
+VisualStudioVersion = 15.0.26906.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{406987C1-489A-4877-9DC0-DEFACDED44AB}"
 EndProject
@@ -17,6 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SHClient", "sample\SHClient
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DE60395D-D1AC-4054-B6B4-2D8CDBE74894}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		Commands.txt = Commands.txt
 		LICENSE = LICENSE
 		README.md = README.md

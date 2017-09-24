@@ -2,9 +2,9 @@
 
 namespace SmartHome
 {
-    public class DeviceDiscoveryEventArgs : EventArgs
+    public class DeviceEventArgs : EventArgs
     {
-        public DeviceDiscoveryEventArgs(Device device)
+        public DeviceEventArgs(Device device)
         {
             Device = device;
         }

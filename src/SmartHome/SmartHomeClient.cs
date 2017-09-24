@@ -9,7 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using static SmartHome.Utils;
+using static SmartHome.EncryptionHelpers;
 
 namespace SmartHome
 {
@@ -103,11 +103,11 @@ namespace SmartHome
                         {
                             Debug.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
 
-                            device = Device.FromJson(obj);
+                            device = Device.FromJson(obj, this);
                             device.IPAddress = ((IPEndPoint)localEp).Address;
                             devices.Add(macAddress, device);
 
-                            DeviceDiscovered?.Invoke(this, new DeviceDiscoveryEventArgs(device));
+                            DeviceDiscovered?.Invoke(this, new DeviceEventArgs(device));
                         }
                         else
                         {
@@ -134,7 +134,7 @@ namespace SmartHome
         {
             var obj = Commands.GetSysInfo;
             var enc = Encoding.UTF8.GetBytes(obj);
-            var a = Utils.Encrypt(enc);
+            var a = EncryptionHelpers.Encrypt(enc);
             socket.SendTo(a, 0, a.Length, SocketFlags.None, multicastEp);
         }
 
@@ -142,7 +142,14 @@ namespace SmartHome
 
         public bool IsRunning => isRunning;
 
-        public event EventHandler<DeviceDiscoveryEventArgs> DeviceDiscovered;
+        public event EventHandler<DeviceEventArgs> DeviceDiscovered;
+
+        public event EventHandler<DeviceEventArgs> DeviceUpdated;
+
+        internal void OnDeviceUpdated(Device device)
+        {
+            DeviceUpdated?.Invoke(this, new DeviceEventArgs(device));
+        }
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls

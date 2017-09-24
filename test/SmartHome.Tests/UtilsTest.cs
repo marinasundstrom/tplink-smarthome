@@ -11,11 +11,11 @@ namespace SmartHome.Tests
         {
             string unencoded = "Foo";
 
-            var encoded = Utils.Encrypt(
+            var encoded = EncryptionHelpers.Encrypt(
                 Encoding.UTF8.GetBytes(unencoded));
 
             var decoded = Encoding.UTF8.GetString(
-                Utils.Decrypt(encoded));
+                EncryptionHelpers.Decrypt(encoded));
 
             Assert.Equal(unencoded, decoded);
         }

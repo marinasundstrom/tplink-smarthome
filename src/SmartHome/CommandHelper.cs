@@ -9,13 +9,13 @@ namespace SmartHome
         public static async Task<string> SendCommand(IPAddress ipAddress, string command)
         {
             var data = Encoding.UTF8.GetBytes(command);
-            var encryptedData = Utils.Encrypt(data);
+            var encryptedData = EncryptionHelpers.Encrypt(data);
 
             var results = await SocketHelpers.Send(
                 ipAddress,
                 encryptedData);
 
-            var decryptedResults = Utils.Decrypt(results);
+            var decryptedResults = EncryptionHelpers.Decrypt(results);
             return Encoding.UTF8.GetString(decryptedResults);
         }
     }

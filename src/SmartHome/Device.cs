@@ -11,9 +11,16 @@ namespace SmartHome
 {
     public abstract class Device
     {
+        private SmartHomeClient _client;
+
         public Device()
         {
             Type = DeviceType.Unknown;
+        }
+
+        internal Device(SmartHomeClient client) : this()
+        {
+            _client = client;
         }
 
         public string Alias { get; protected set; }
@@ -51,6 +58,12 @@ namespace SmartHome
         internal void UpdateInternal(JObject obj)
         {
             Update(obj);
+            OnUpdated();
+        }
+
+        protected void OnUpdated()
+        {
+            _client?.OnDeviceUpdated(this);
         }
 
         protected virtual void Update(JObject obj)
@@ -86,6 +99,11 @@ namespace SmartHome
 
         public static Device FromJson(JObject obj)
         {
+            return FromJson(obj);
+        }
+
+        internal static Device FromJson(JObject obj, SmartHomeClient client)
+        {
             string type = obj.Value<string>("type");
             if (type == null)
             {
@@ -95,12 +113,12 @@ namespace SmartHome
             switch (type)
             {
                 case "IOT.SMARTPLUGSWITCH":
-                    var plug = new Plug();
+                    var plug = new Plug(client);
                     plug.Update(obj);
                     return plug;
 
                 case "IOT.SMARTBULB":
-                    var bulb = new LightBulb();
+                    var bulb = new LightBulb(client);
                     bulb.Update(obj);
                     return bulb;
             }
@@ -108,14 +126,18 @@ namespace SmartHome
             throw new ArgumentException();
         }
 
-        public Task SetAliasAsync(string alias)
+        public async Task SetAliasAsync(string alias)
         {
-            return SendCommand(Commands.SetDeviceAlias(alias));
+            await SendCommand(Commands.SetDeviceAlias(alias));
+            Alias = alias;
+            OnUpdated();
         }
 
-        public Task SetIdAsync(string id)
+        public async Task SetDeviceIdAsync(string id)
         {
-            return SendCommand(Commands.SetDeviceId(id));
+            await SendCommand(Commands.SetDeviceId(id));
+            DeviceId = id;
+            OnUpdated();
         }
 
         protected Task<string> SendCommand(string command)

@@ -13,7 +13,12 @@ namespace SmartHome.Devices
             Type = DeviceType.LightBulb;
         }
 
-        public LightBulb(IPAddress address): this()
+        internal LightBulb(SmartHomeClient client) : base(client)
+        {
+            Type = DeviceType.LightBulb;
+        }
+
+        public LightBulb(IPAddress address) : this()
         {
             IPAddress = address;
         }
@@ -45,13 +50,13 @@ namespace SmartHome.Devices
             State = p;
         }
 
-        public Task TransitionStateAsync(SwitchState powerState, int transitionPeriod = 0)
+        public async Task TransitionStateAsync(SwitchState powerState, int transitionPeriod = 0)
         {
             var state = new RequestedState()
             {
                 PowerState = powerState
             };
-            return TransitionStateAsync(state, transitionPeriod);
+            await TransitionStateAsync(state, transitionPeriod);
         }
 
         public async Task TransitionStateAsync(RequestedState state, int transitionPeriod = 0)
@@ -61,7 +66,7 @@ namespace SmartHome.Devices
                 throw new NotSupportedException("Light bulb is not dimmable.s");
             }
             bool? powerState = null;
-            if(state.PowerState != null)
+            if (state.PowerState != null)
             {
                 powerState = state.PowerState == SwitchState.On ? true : false;
             }
@@ -73,16 +78,8 @@ namespace SmartHome.Devices
             int code = GetErrorCode(obj);
 
             UpdateBulbState(obj);
-        }
 
-        public async Task<LightBulbState> GetStateAsync()
-        {
-            var str = await SendCommand(Commands.GetSysInfo);
-            var obj = ParseGetSysInfo(str);
-
-            UpdateInternal(obj);
-
-            return State;
+            OnUpdated();
         }
 
         public bool? IsDimmable { get; private set; }

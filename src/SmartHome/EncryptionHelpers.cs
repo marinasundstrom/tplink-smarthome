@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SmartHome
 {
-    public static class Utils
+    public static class EncryptionHelpers
     {
         public static byte[] Encrypt(byte[] input, byte key = 0xAB)
         {
