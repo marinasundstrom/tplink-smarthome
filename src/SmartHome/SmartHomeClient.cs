@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SmartHome.Devices;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -104,6 +105,14 @@ namespace SmartHome
                             Debug.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
 
                             device = Device.FromJson(obj, this);
+
+                            if (DeviceTypeFilter != null && !DeviceTypeFilter.Contains(device.Type))
+                            {
+                                device = null;
+                                Debug.WriteLine("Excluded device");
+                                continue;
+                            }
+
                             device.IPAddress = ((IPEndPoint)localEp).Address;
                             devices.Add(macAddress, device);
 
@@ -139,6 +148,8 @@ namespace SmartHome
         }
 
         public TimeSpan DiscoveryRate { get; set; }
+
+        public DeviceType[] DeviceTypeFilter { get; set; }
 
         public bool IsRunning => isRunning;
 

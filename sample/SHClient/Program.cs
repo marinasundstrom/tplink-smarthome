@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using SmartHome;
 using SmartHome.Devices;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -24,7 +25,6 @@ namespace SHClient
 
                 var stateOption = command.Option("-s|--state",
                                         "Sets the on/off state of the plug.", CommandOptionType.SingleValue);
-
 
                 var jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
@@ -78,7 +78,6 @@ namespace SHClient
                 var brightnessOption = command.Option("-b|--brightness",
                                         "Sets the brightness of the light bulb.", CommandOptionType.SingleValue);
 
-
                 var jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
@@ -88,14 +87,12 @@ namespace SHClient
 
                     if (jsonOption.HasValue())
                     {
-
                         var bulb = new LightBulb(address);
                         await bulb.FetchAsync();
                         Console.WriteLine(JsonConvert.SerializeObject(bulb, Formatting.Indented));
                     }
                     else
                     {
-
                         var desiredState = new RequestedState();
 
                         SwitchState desiredSwitchState = SwitchState.Off;
@@ -143,18 +140,29 @@ namespace SHClient
                 command.Description = "Watches for Smart Home devices on the network.";
                 command.HelpOption("-?|-h|--help");
 
-                /*
-                var stateOption = command.Option("-f|--filter",
-                                        "Sets the filter.", CommandOptionType.SingleValue);
-                */
+                var filterOption = command.Option("-f|--filter",
+                                        "Sets the filter.", CommandOptionType.MultipleValue);
 
                 var jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
-
                 command.OnExecute(async () =>
                 {
-                    using (var client = new SmartHomeClient())
+                    List<DeviceType> deviceFilter = null;
+
+                    if (filterOption.HasValue())
+                    {
+                        DeviceType filterType;
+
+                        if (Enum.TryParse(filterOption.Value(), true, out filterType))
+                        {
+                            if(deviceFilter == null) deviceFilter = new List<DeviceType>();
+
+                            deviceFilter.Add(filterType);
+                        }
+                    }
+
+                    using (var client = new SmartHomeClient() { DeviceTypeFilter = deviceFilter?.ToArray() })
                     {
                         client.DeviceDiscovered += (s, e) =>
                         {
