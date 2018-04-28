@@ -13,7 +13,7 @@ using static SmartHome.EncryptionHelpers;
 
 namespace SmartHome
 {
-    public class SmartHomeClient : IDisposable
+    public class SmartHomeClient : IDisposable, ISmartHomeClient
     {
         private Dictionary<string, Device> devices;
         private System.Timers.Timer timer;

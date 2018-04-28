@@ -23,7 +23,7 @@ namespace SmartHome.Devices
             IPAddress = address;
         }
 
-        protected override void Update(JObject obj)
+        protected override bool Update(JObject obj)
         {
             base.Update(obj);
 
@@ -32,12 +32,12 @@ namespace SmartHome.Devices
             IsVariableColorTemp = Convert.ToBoolean(obj.Value<int>("is_variable_color_temp"));
 
             UpdateBulbState(obj.Value<JObject>("light_state"));
+
+            return true;
         }
 
         private void UpdateBulbState(JObject obj)
         {
-            //var state = obj.Value<JObject>("dft_on_state");
-
             var p = State ?? new LightBulbState();
 
             p.Mode = obj.Value<string>("mode");

@@ -57,8 +57,10 @@ namespace SmartHome
 
         internal void UpdateInternal(JObject obj)
         {
-            Update(obj);
-            OnUpdated();
+            if (Update(obj))
+            {
+                OnUpdated();
+            }
         }
 
         protected void OnUpdated()
@@ -66,7 +68,7 @@ namespace SmartHome
             _client?.OnDeviceUpdated(this);
         }
 
-        protected virtual void Update(JObject obj)
+        protected virtual bool Update(JObject obj)
         {
             Alias = obj.Value<string>("alias");
             Description = obj.Value<string>("description");
@@ -87,6 +89,8 @@ namespace SmartHome
             RSSI = obj.Value<int>("rssi");
 
             IsUpdating = Convert.ToBoolean(obj.Value<int>("updating"));
+
+            return true;
         }
 
         public async Task FetchAsync()

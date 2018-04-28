@@ -29,12 +29,14 @@ namespace SmartHome.Devices
 
         public SwitchState RelayState { get; private set; }
 
-        protected override void Update(JObject obj)
+        protected override bool Update(JObject obj)
         {
             base.Update(obj);
 
             RelayState = (SwitchState)obj
                 .Value<int>("relay_state");
+
+            return true;
         }
 
         public async Task SetRelayStateAsync(SwitchState state)

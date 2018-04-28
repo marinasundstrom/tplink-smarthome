@@ -14,7 +14,7 @@ namespace SHClient
         private static int Main(string[] args)
         {
             var app = new CommandLineApplication();
-            app.Command("plug", (Action<CommandLineApplication>)((command) =>
+            app.Command("plug", (command) =>
             {
                 command.Description = "Control a Smart Home plug.";
                 command.HelpOption("-?|-h|--help");
@@ -25,22 +25,46 @@ namespace SHClient
                 var stateOption = command.Option("-s|--state",
                                         "Sets the on/off state of the plug.", CommandOptionType.SingleValue);
 
-                command.OnExecute((Func<Task<int>>)(async () =>
+
+                var jsonOption = command.Option("--json",
+                                        "Output device info in JSON.", CommandOptionType.NoValue);
+
+                command.OnExecute(async () =>
                 {
                     var address = IPAddress.Parse(targetArgument.Value);
 
-                    SwitchState desiredState = SwitchState.Off;
-
-                    if (Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
+                    if (jsonOption.HasValue())
                     {
                         var plug = new Plug(address);
-                        //await plug.FetchAsync();
+                        await plug.FetchAsync();
+                        Console.WriteLine(JsonConvert.SerializeObject(plug, Formatting.Indented));
+                    }
+                    else
+                    {
+                        SwitchState desiredState = SwitchState.Off;
+
+                        bool shouldToggleState = false;
+
+                        if (string.Equals(stateOption.Value(), "toggle", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            shouldToggleState = true;
+                        }
+                        var plug = new Plug(address);
+                        if (shouldToggleState)
+                        {
+                            await plug.FetchAsync();
+                            desiredState = plug.RelayState == SwitchState.Off ? SwitchState.On : SwitchState.Off;
+                        }
+                        else if (!Enum.TryParse(stateOption.Value(), true, out desiredState))
+                        {
+                            throw new Exception("Invalid value for parameter \"state\".");
+                        }
                         await plug.SetRelayStateAsync(desiredState);
                     }
                     return 0;
-                }));
-            }));
-            app.Command("bulb", (Action<CommandLineApplication>)((command) =>
+                });
+            });
+            app.Command("bulb", (command) =>
             {
                 command.Description = "Control a Smart Home bulb.";
                 command.HelpOption("-?|-h|--help");
@@ -54,31 +78,67 @@ namespace SHClient
                 var brightnessOption = command.Option("-b|--brightness",
                                         "Sets the brightness of the light bulb.", CommandOptionType.SingleValue);
 
-                command.OnExecute((Func<Task<int>>)(async () =>
+
+                var jsonOption = command.Option("--json",
+                                        "Output device info in JSON.", CommandOptionType.NoValue);
+
+                command.OnExecute(async () =>
                 {
                     var address = IPAddress.Parse(targetArgument.Value);
 
-                    var state = new SmartHome.Devices.RequestedState();
-
-                    SwitchState desiredState = SwitchState.Off;
-                    int desiredBrightness = 0;
-
-                    if (Enum.TryParse<SwitchState>(stateOption.Value(), out desiredState))
+                    if (jsonOption.HasValue())
                     {
-                        state.PowerState = desiredState;
-                    }
-                    if (int.TryParse(brightnessOption.Value(), out desiredBrightness))
-                    {
-                        state.Brightness = desiredBrightness;
-                    }
 
-                    var bulb = new LightBulb(address);
-                    //await bulb.FetchAsync();
-                    await bulb.TransitionStateAsync((RequestedState)state);
+                        var bulb = new LightBulb(address);
+                        await bulb.FetchAsync();
+                        Console.WriteLine(JsonConvert.SerializeObject(bulb, Formatting.Indented));
+                    }
+                    else
+                    {
+
+                        var desiredState = new RequestedState();
+
+                        SwitchState desiredSwitchState = SwitchState.Off;
+                        int desiredBrightness = 0;
+
+                        bool shouldToggleState = false;
+
+                        if (string.Equals(stateOption.Value(), "toggle", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            shouldToggleState = true;
+                        }
+                        else if (Enum.TryParse(stateOption.Value(), true, out desiredSwitchState))
+                        {
+                            desiredState.PowerState = desiredSwitchState;
+                        }
+                        else
+                        {
+                            throw new Exception("Invalid value for parameter \"state\".");
+                        }
+                        if (brightnessOption.HasValue())
+                        {
+                            if (int.TryParse(brightnessOption.Value(), out desiredBrightness))
+                            {
+                                desiredState.Brightness = desiredBrightness;
+                            }
+                            else
+                            {
+                                throw new Exception("Invalid value for parameter \"brightness\".");
+                            }
+                        }
+
+                        var bulb = new LightBulb(address);
+                        if (shouldToggleState)
+                        {
+                            await bulb.FetchAsync();
+                            desiredState.PowerState = bulb.State.PowerState == SwitchState.Off ? SwitchState.On : SwitchState.Off;
+                        }
+                        await bulb.TransitionStateAsync(desiredState);
+                    }
                     return 0;
-                }));
-            }));
-            app.Command("discover", (Action<CommandLineApplication>)((command) =>
+                });
+            });
+            app.Command("discover", (command) =>
             {
                 command.Description = "Watches for Smart Home devices on the network.";
                 command.HelpOption("-?|-h|--help");
@@ -92,7 +152,7 @@ namespace SHClient
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
 
-                command.OnExecute((Func<Task<int>>)(async () =>
+                command.OnExecute(async () =>
                 {
                     using (var client = new SmartHomeClient())
                     {
@@ -116,8 +176,8 @@ namespace SHClient
 
                         while (true) await Task.Delay(1000);
                     }
-                }));
-            }));
+                });
+            });
             return app.Execute(args);
         }
 
