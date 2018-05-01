@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "src\TestApp\TestApp.csproj", "{19C61098-353B-4572-BE73-50FDD4F3445F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,10 @@ Global
 		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19C61098-353B-4572-BE73-50FDD4F3445F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19C61098-353B-4572-BE73-50FDD4F3445F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19C61098-353B-4572-BE73-50FDD4F3445F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19C61098-353B-4572-BE73-50FDD4F3445F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -49,6 +55,7 @@ Global
 		{A9C935D1-9FE1-422F-BAEF-BBA4D771FCAC} = {406987C1-489A-4877-9DC0-DEFACDED44AB}
 		{7EDB124C-0D85-487D-8FFB-C8D52ACD5EAE} = {389E4562-0D29-4D0D-A744-0FDA03D96CEA}
 		{DDC6462E-2B4F-42B9-BB26-6E3386E0959A} = {594AC9D1-C367-41A6-BC44-32714B000961}
+		{19C61098-353B-4572-BE73-50FDD4F3445F} = {406987C1-489A-4877-9DC0-DEFACDED44AB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4A5DCD13-758B-403F-B6F9-4A28F751D1A0}

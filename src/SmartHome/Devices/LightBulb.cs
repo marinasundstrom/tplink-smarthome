@@ -6,6 +6,7 @@ using static SmartHome.ParserHelpers;
 
 namespace SmartHome.Devices
 {
+    [DeviceTypeProvider(typeof(LightBulbProvider))]
     public class LightBulb : Device
     {
         internal LightBulb()
@@ -21,19 +22,6 @@ namespace SmartHome.Devices
         public LightBulb(IPAddress address) : this()
         {
             IPAddress = address;
-        }
-
-        protected override bool Update(JObject obj)
-        {
-            base.Update(obj);
-
-            IsDimmable = Convert.ToBoolean(obj.Value<int>("is_dimmable"));
-            IsColor = Convert.ToBoolean(obj.Value<int>("is_color"));
-            IsVariableColorTemp = Convert.ToBoolean(obj.Value<int>("is_variable_color_temp"));
-
-            UpdateBulbState(obj.Value<JObject>("light_state"));
-
-            return true;
         }
 
         private void UpdateBulbState(JObject obj)
@@ -52,14 +40,14 @@ namespace SmartHome.Devices
 
         public async Task TransitionStateAsync(SwitchState powerState, int transitionPeriod = 0)
         {
-            var state = new RequestedState()
+            var state = new RequestedBulbState()
             {
                 PowerState = powerState
             };
             await TransitionStateAsync(state, transitionPeriod);
         }
 
-        public async Task TransitionStateAsync(RequestedState state, int transitionPeriod = 0)
+        public async Task TransitionStateAsync(RequestedBulbState state, int transitionPeriod = 0)
         {
             if (IsDimmable != null && !(bool)IsDimmable)
             {
@@ -78,37 +66,15 @@ namespace SmartHome.Devices
             int code = GetErrorCode(obj);
 
             UpdateBulbState(obj);
-
-            OnUpdated();
         }
 
-        public bool? IsDimmable { get; private set; }
+        public bool? IsDimmable { get; internal set; }
 
-        public bool? IsColor { get; private set; }
+        public bool? IsColor { get; internal set; }
 
-        public bool? IsVariableColorTemp { get; private set; }
+        public bool? IsVariableColorTemp { get; internal set; }
 
-        public LightBulbState State { get; private set; }
-    }
-
-    public struct RequestedState
-    {
-        public SwitchState? PowerState { get; set; }
-        public int? Brightness { get; set; }
-        public int? Hue { get; set; }
-        public int? Saturation { get; set; }
-        public int? ColorTemp { get; set; }
-    }
-
-
-    public class LightBulbState
-    {
-        public string Mode { get; internal set; }
-        public SwitchState PowerState { get; internal set; }
-        public int Hue { get; internal set; }
-        public int Saturation { get; internal set; }
-        public int ColorTemp { get; internal set; }
-        public int Brightness { get; internal set; }
+        public LightBulbState State { get; internal set; }
     }
 
 }

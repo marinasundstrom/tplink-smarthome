@@ -16,7 +16,7 @@ namespace SmartHome
 {
     public class SmartHomeClient : IDisposable, ISmartHomeClient
     {
-        private Dictionary<string, Device> devices;
+        private IDeviceManager deviceManager;
         private System.Timers.Timer timer;
         private Socket socket;
         private Task scannerThread;
@@ -27,17 +27,22 @@ namespace SmartHome
         private IPAddress multicastAddress;
         private int multicastPort;
 
-        public IEnumerable<Device> GetDevices()
-        {
-            return devices.Select(x => x.Value);
-        }
-
         private IPEndPoint multicastEp;
         private IPEndPoint localEp;
 
         public SmartHomeClient()
         {
             DiscoveryRate = TimeSpan.FromSeconds(30);
+            DeviceTypeFilter = null;
+
+            InitializeDeviceManager();
+        }
+
+        private void InitializeDeviceManager()
+        {
+            deviceManager = new DeviceManager();
+            deviceManager.RegisterDeviceTypeProvider(LightBulbProvider.Instance);
+            deviceManager.RegisterDeviceTypeProvider(PlugProvider.Instance);
         }
 
         public static Socket CreateSocket(EndPoint localEp)
@@ -60,7 +65,6 @@ namespace SmartHome
 
             socket = CreateSocket(localEp);
 
-            devices = new Dictionary<string, Device>();
             timer = new System.Timers.Timer(DiscoveryRate.TotalMilliseconds);
             timer.Elapsed += (s, e) =>
             {
@@ -84,7 +88,7 @@ namespace SmartHome
 
             cancellationTokenSource = new CancellationTokenSource();
             CancellationToken ct = cancellationTokenSource.Token;
-            scannerThread = Task.Run(() =>
+            scannerThread = Task.Run(async () =>
             {
                 while (!ct.IsCancellationRequested)
                 {
@@ -98,29 +102,26 @@ namespace SmartHome
 
                         if (obj == null) continue;
 
-                        var macAddress = ParserHelpers.GetMACAddress(obj);
+                        var deviceType = ParserHelpers.GetDeviceType(obj);
 
-                        if (!devices.TryGetValue(macAddress, out var device))
+                        if (DeviceTypeFilter != null && !DeviceTypeFilter.Contains(deviceType))
                         {
-                            Debug.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
-
-                            device = Device.FromJson(obj, this);
-
-                            if (DeviceTypeFilter != null && !DeviceTypeFilter.Contains(device.Type))
-                            {
-                                device = null;
-                                Debug.WriteLine("Excluded device");
-                                continue;
-                            }
-
-                            device.IPAddress = ((IPEndPoint)localEp).Address;
-                            devices.Add(macAddress, device);
-
-                            DeviceDiscovered?.Invoke(this, new DeviceEventArgs(device));
+                            Debug.WriteLine("Excluded device");
+                            continue;
                         }
-                        else
+
+                        var requestContext = new RequestContext(obj, (localEp as IPEndPoint).Address);
+                        DeviceStateInfo state = await deviceManager.AddOrUpdate(requestContext);
+
+                        switch(state.State)
                         {
-                            device.UpdateInternal(obj);
+                            case DeviceState.Added:
+                                DeviceDiscovered?.Invoke(this, new DeviceEventArgs(state.Device));
+                                break;
+
+                            case DeviceState.Updated:
+                                DeviceUpdated?.Invoke(this, new DeviceEventArgs(state.Device));
+                                break;
                         }
                     }
                     catch (Exception e)
@@ -130,6 +131,8 @@ namespace SmartHome
                 }
             }, ct);
         }
+
+        public IEnumerable<Device> GetDevices() => deviceManager.GetDevices();
 
         public void Stop()
         {
@@ -149,7 +152,18 @@ namespace SmartHome
 
         public TimeSpan DiscoveryRate { get; set; }
 
-        public DeviceType[] DeviceTypeFilter { get; set; }
+        public DeviceType[] DeviceTypeFilter
+        {
+            get => _deviceTypeFilter;
+            set
+            {
+                if (IsRunning)
+                { 
+                    throw new InvalidOperationException("Cannot set filter when running.");
+                }
+                _deviceTypeFilter = value;
+            }
+        }
 
         public bool IsRunning => isRunning;
 
@@ -157,13 +171,9 @@ namespace SmartHome
 
         public event EventHandler<DeviceEventArgs> DeviceUpdated;
 
-        internal void OnDeviceUpdated(Device device)
-        {
-            DeviceUpdated?.Invoke(this, new DeviceEventArgs(device));
-        }
-
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
+        private DeviceType[] _deviceTypeFilter;
 
         protected virtual void Dispose(bool disposing)
         {

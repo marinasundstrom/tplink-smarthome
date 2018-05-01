@@ -9,6 +9,7 @@ using static SmartHome.ParserHelpers;
 
 namespace SmartHome.Devices
 {
+    [DeviceTypeProvider(typeof(PlugProvider))]
     public sealed class Plug : Device
     {
 
@@ -27,24 +28,13 @@ namespace SmartHome.Devices
             IPAddress = address;
         }
 
-        public SwitchState RelayState { get; private set; }
-
-        protected override bool Update(JObject obj)
-        {
-            base.Update(obj);
-
-            RelayState = (SwitchState)obj
-                .Value<int>("relay_state");
-
-            return true;
-        }
+        public SwitchState RelayState { get; internal set; }
 
         public async Task SetRelayStateAsync(SwitchState state)
         {
             await SendCommand(
                 Commands.SetRelayState(state == SwitchState.On));
             RelayState = state;
-            OnUpdated();
         }
     }
 }

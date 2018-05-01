@@ -11,7 +11,8 @@ namespace SmartHome
 {
     public abstract class Device
     {
-        private SmartHomeClient _client;
+        private SmartHomeClient client;
+        private DeviceTypeProvider deviceTypeProvider;
 
         public Device()
         {
@@ -20,135 +21,70 @@ namespace SmartHome
 
         internal Device(SmartHomeClient client) : this()
         {
-            _client = client;
+            this.client = client;
         }
 
-        public string Alias { get; protected set; }
+        public string Alias { get; internal set; }
 
-        public string Description { get; protected set; }
+        public string Description { get; internal set; }
 
         [JsonConverter(typeof(StringEnumConverter))]
-        public DeviceType Type { get; protected set; }
+        public DeviceType Type { get; internal set; }
 
-        public string DeviceTypeId { get; protected set; }
+        public string DeviceTypeId { get; internal set; }
 
-        public string Model { get; protected set; }
+        public string Model { get; internal set; }
 
-        public string HardwareVersion { get; protected set; }
+        public string HardwareVersion { get; internal set; }
 
-        public string SoftwareVersion { get; protected set; }
+        public string SoftwareVersion { get; internal set; }
 
-        public string MAC { get; protected set; }
+        public string MAC { get; internal set; }
 
-        public string DeviceId { get; protected set; }
+        public string DeviceId { get; internal set; }
 
-        public string HardwareId { get; protected set; }
+        public string HardwareId { get; internal set; }
 
-        public string FirmwareId { get; protected set; }
+        public string FirmwareId { get; internal set; }
 
-        public string OEMId { get; protected set; }
+        public string OEMId { get; internal set; }
 
         [JsonConverter(typeof(IPAddressConverter))]
         public IPAddress IPAddress { get; internal set; }
 
-        public int RSSI { get; private set; }
+        public int RSSI { get; internal set; }
 
-        public bool IsUpdating { get; private set; }
+        public bool IsUpdating { get; internal set; }
 
-        internal void UpdateInternal(JObject obj)
-        {
-            if (Update(obj))
-            {
-                OnUpdated();
-            }
-        }
-
-        protected void OnUpdated()
-        {
-            _client?.OnDeviceUpdated(this);
-        }
-
-        protected virtual bool Update(JObject obj)
-        {
-            Alias = obj.Value<string>("alias");
-            Description = obj.Value<string>("description");
-            Model = obj.Value<string>("model");
-            DeviceTypeId = obj.Value<string>("type");
-            if (DeviceTypeId == null)
-            {
-                DeviceTypeId = obj.Value<string>("mic_type");
-            }
-            HardwareVersion = obj.Value<string>("sw_ver");
-            SoftwareVersion = obj.Value<string>("hw_ver");
-            MAC = GetMACAddress(obj);
-            DeviceId = obj.Value<string>("deviceId");
-            HardwareId = obj.Value<string>("hwId");
-            FirmwareId = obj.Value<string>("fwId");
-            OEMId = obj.Value<string>("oemId");
-
-            RSSI = obj.Value<int>("rssi");
-
-            IsUpdating = Convert.ToBoolean(obj.Value<int>("updating"));
-
-            return true;
-        }
-
-        public async Task FetchAsync()
-        {
-            var str = await SendCommand(Commands.GetSysInfo);
-            var obj = ParseGetSysInfo(str);
-
-            UpdateInternal(obj);
-        }
-
-        public static Device FromJson(JObject obj)
-        {
-            return FromJson(obj);
-        }
-
-        internal static Device FromJson(JObject obj, SmartHomeClient client)
-        {
-            string type = obj.Value<string>("type");
-            if (type == null)
-            {
-                type = obj.Value<string>("mic_type");
-            }
-
-            switch (type)
-            {
-                case "IOT.SMARTPLUGSWITCH":
-                    var plug = new Plug(client);
-                    plug.Update(obj);
-                    return plug;
-
-                case "IOT.SMARTBULB":
-                    var bulb = new LightBulb(client);
-                    bulb.Update(obj);
-                    return bulb;
-            }
-
-            throw new ArgumentException();
-        }
 
         public async Task SetAliasAsync(string alias)
         {
             await SendCommand(Commands.SetDeviceAlias(alias));
             Alias = alias;
-            OnUpdated();
         }
 
         public async Task SetDeviceIdAsync(string id)
         {
             await SendCommand(Commands.SetDeviceId(id));
             DeviceId = id;
-            OnUpdated();
         }
 
-        protected Task<string> SendCommand(string command)
+        public Task<string> SendCommand(string command)
         {
             return CommandHelper.SendCommand(
                 IPAddress,
                 command);
+        }
+
+        public async Task FetchAsync()
+        {
+            deviceTypeProvider = deviceTypeProvider ?? this.GetDeviceTypeProvider();
+
+            var str = await SendCommand(Commands.GetSysInfo);
+            var obj = ParseGetSysInfo(str);
+
+            var requestContext = new RequestContext(obj, IPAddress);
+            await deviceTypeProvider.UpdateDevice(this, requestContext);
         }
     }
 

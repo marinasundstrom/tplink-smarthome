@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using SmartHome.Devices;
 
 namespace SmartHome
 {
@@ -74,6 +75,32 @@ namespace SmartHome
                 code = token.Value<int>();
             }
             return code;
+        }
+
+        public static string GetDeviceTypeString(JObject obj)
+        {
+            string type = obj.Value<string>("type");
+            if (type == null)
+            {
+                type = obj.Value<string>("mic_type");
+            }
+            return type;
+        }
+
+        public static DeviceType GetDeviceType(JObject obj)
+        {
+            string type = GetDeviceTypeString(obj);
+
+            switch (type)
+            {
+                case "IOT.SMARTPLUGSWITCH":
+                    return DeviceType.Plug;
+
+                case "IOT.SMARTBULB":
+                    return DeviceType.LightBulb;
+            }
+
+            return DeviceType.Unknown;
         }
     }
 }
