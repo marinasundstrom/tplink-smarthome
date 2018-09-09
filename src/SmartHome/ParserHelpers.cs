@@ -3,11 +3,11 @@ using SmartHome.Devices;
 
 namespace SmartHome
 {
-    static class ParserHelpers
+    internal static class ParserHelpers
     {
         public static string GetMACAddress(JObject obj)
         {
-            var result = obj.Value<string>("mac");
+            string result = obj.Value<string>("mac");
             if (result == null)
             {
                 result = obj.Value<string>("mic_mac");
@@ -18,11 +18,11 @@ namespace SmartHome
 
         private static string FormatMACAddress(string result)
         {
-            var r = string.Empty;
+            string r = string.Empty;
             for (int i = 0; i < result.Length; i += 2)
             {
                 string pair = $"{result[i]}{result[i + 1]}";
-                if (r == string.Empty)
+                if (r?.Length == 0)
                 {
                     r = pair;
                 }
@@ -31,13 +31,12 @@ namespace SmartHome
                     r += $":{pair}";
                 }
             }
-            result = r;
-            return result;
+            return r;
         }
 
         public static JObject ParseGetSysInfo(string input)
         {
-            var obj = JObject.Parse(input)?
+            JObject obj = JObject.Parse(input)?
                                 .Value<JObject>("system")?
                                 .Value<JObject>("get_sysinfo");
 
@@ -53,7 +52,7 @@ namespace SmartHome
 
         public static JObject ParseSmartBulbTransitionLightStateResponse(string input)
         {
-            var obj = JObject.Parse(input)?
+            JObject obj = JObject.Parse(input)?
                                 .Value<JObject>("smartlife.iot.smartbulb.lightingservice")?
                                 .Value<JObject>("transition_light_state");
 
@@ -70,7 +69,7 @@ namespace SmartHome
         public static int GetErrorCode(JObject obj)
         {
             int code = 0;
-            if (obj.TryGetValue("error_code", out var token))
+            if (obj.TryGetValue("error_code", out JToken token))
             {
                 code = token.Value<int>();
             }
@@ -79,11 +78,7 @@ namespace SmartHome
 
         public static string GetDeviceTypeString(JObject obj)
         {
-            string type = obj.Value<string>("type");
-            if (type == null)
-            {
-                type = obj.Value<string>("mic_type");
-            }
+            string type = obj.Value<string>("type") ?? obj.Value<string>("mic_type");
             return type;
         }
 

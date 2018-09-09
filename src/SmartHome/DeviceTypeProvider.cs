@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace SmartHome
 {
@@ -15,16 +13,12 @@ namespace SmartHome
 
         protected virtual bool SetCommonDeviceProperties(Device device, RequestContext requestContext)
         {
-            var obj = requestContext.Data;
+            Newtonsoft.Json.Linq.JObject obj = requestContext.Data;
 
             device.Alias = obj.Value<string>("alias");
             device.Description = obj.Value<string>("description");
             device.Model = obj.Value<string>("model");
-            device.DeviceTypeId = obj.Value<string>("type");
-            if (device.DeviceTypeId == null)
-            {
-                device.DeviceTypeId = obj.Value<string>("mic_type");
-            }
+            device.DeviceTypeId = obj.Value<string>("type") ?? obj.Value<string>("mic_type");
             device.HardwareVersion = obj.Value<string>("sw_ver");
             device.SoftwareVersion = obj.Value<string>("hw_ver");
             device.MAC = ParserHelpers.GetMACAddress(obj);

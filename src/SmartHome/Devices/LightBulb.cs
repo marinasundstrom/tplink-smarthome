@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using static SmartHome.ParserHelpers;
 
 namespace SmartHome.Devices
@@ -26,7 +26,7 @@ namespace SmartHome.Devices
 
         private void UpdateBulbState(JObject obj)
         {
-            var p = State ?? new LightBulbState();
+            LightBulbState p = State ?? new LightBulbState();
 
             p.Mode = obj.Value<string>("mode");
             p.PowerState = (SwitchState)obj.Value<int>("on_off");
@@ -44,7 +44,8 @@ namespace SmartHome.Devices
             {
                 PowerState = powerState
             };
-            await TransitionStateAsync(state, transitionPeriod);
+            await TransitionStateAsync(state, transitionPeriod)
+                .ConfigureAwait(false);
         }
 
         public async Task TransitionStateAsync(RequestedBulbState state, int transitionPeriod = 0)
@@ -56,12 +57,14 @@ namespace SmartHome.Devices
             bool? powerState = null;
             if (state.PowerState != null)
             {
-                powerState = state.PowerState == SwitchState.On ? true : false;
+                powerState = state.PowerState == SwitchState.On;
             }
-            var result = await SendCommand(
-                Commands.TransitionLightState(powerState, transitionPeriod, state.Hue, state.Saturation, state.ColorTemp, state.Brightness));
+            string result = await SendCommand(
+                Commands
+                    .TransitionLightState(powerState, transitionPeriod, state.Hue, state.Saturation, state.ColorTemp, state.Brightness))
+                    .ConfigureAwait(false);
 
-            var obj = ParseSmartBulbTransitionLightStateResponse(result);
+            JObject obj = ParseSmartBulbTransitionLightStateResponse(result);
 
             int code = GetErrorCode(obj);
 
@@ -76,5 +79,4 @@ namespace SmartHome.Devices
 
         public LightBulbState State { get; internal set; }
     }
-
 }

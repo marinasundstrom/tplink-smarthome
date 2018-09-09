@@ -1,17 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SmartHome
 {
-    static class Commands
+    internal static class Commands
     {
-        private static string getSysInfo;
-        private static string getSysInfo2;
+        private static string s_getSysInfo;
+        private static string s_getSysInfo2;
 
-        public static string GetSysInfo => getSysInfo ?? (getSysInfo = JsonConvert.SerializeObject(
+        public static string GetSysInfo => s_getSysInfo ?? (s_getSysInfo = JsonConvert.SerializeObject(
             new
             {
                 system = new
@@ -24,7 +21,7 @@ namespace SmartHome
             }
         ));
 
-        public static string GetSysInfo2 => getSysInfo2 ?? (getSysInfo2 = JsonConvert.SerializeObject(
+        public static string GetSysInfo2 => s_getSysInfo2 ?? (s_getSysInfo2 = JsonConvert.SerializeObject(
             new
             {
                 system = new
@@ -90,8 +87,10 @@ namespace SmartHome
                 obj2["brightness"] = brightness;
             }
             obj["transition_light_state"] = obj2;
-            var obj3 = new JObject();
-            obj3["smartlife.iot.smartbulb.lightingservice"] = obj;
+            var obj3 = new JObject
+            {
+                ["smartlife.iot.smartbulb.lightingservice"] = obj
+            };
 
             return obj3.ToString(Formatting.None);
         }
@@ -102,7 +101,7 @@ namespace SmartHome
             {
                 set_dev_alias = new
                 {
-                    alias = alias
+                    alias
                 }
             }
         });
@@ -113,10 +112,9 @@ namespace SmartHome
             {
                 set_device_id = new
                 {
-                    id = id
+                    id
                 }
             }
         });
     }
-
 }

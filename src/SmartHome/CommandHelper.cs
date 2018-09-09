@@ -5,23 +5,23 @@ using System.Threading.Tasks;
 
 namespace SmartHome
 {
-    static class CommandHelper
+    internal static class CommandHelper
     {
         public static async Task<string> SendCommand(UdpClient client, IPAddress ipAddress, string command)
         {
-            var data = Encoding.UTF8.GetBytes(command);
-            var encryptedData = EncryptionHelpers.Encrypt(data);
+            byte[] data = Encoding.UTF8.GetBytes(command);
+            byte[] encryptedData = EncryptionHelpers.Encrypt(data);
 
-            var results = await SocketHelpers.Send(
-                client,
-                ipAddress,
-                encryptedData);
+            byte[] results = await SocketHelpers.Send(
+                client, ipAddress, encryptedData)
+                .ConfigureAwait(false);
 
-            var decryptedResults = EncryptionHelpers.Decrypt(results);
+            byte[] decryptedResults = EncryptionHelpers.Decrypt(results);
             return Encoding.UTF8.GetString(decryptedResults);
         }
 
-        public static async Task<string> SendCommand(IPAddress ipAddress, string command) => 
-            await SendCommand(SocketHelpers.CreateUdpClient(), ipAddress, command);
+        public static Task<string> SendCommand(
+            IPAddress ipAddress, string command) =>
+                SendCommand(SocketHelpers.CreateUdpClient(), ipAddress, command);
     }
 }

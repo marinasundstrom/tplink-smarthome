@@ -9,5 +9,4 @@
         public int ColorTemp { get; internal set; }
         public int Brightness { get; internal set; }
     }
-
 }

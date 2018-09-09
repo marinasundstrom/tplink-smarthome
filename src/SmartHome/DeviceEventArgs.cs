@@ -11,5 +11,4 @@ namespace SmartHome
 
         public Device Device { get; set; }
     }
-
 }

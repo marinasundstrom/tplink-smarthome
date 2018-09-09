@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using SmartHome.Devices;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,46 +7,50 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
+using SmartHome.Devices;
 using static SmartHome.EncryptionHelpers;
 
 namespace SmartHome
 {
     public class SmartHomeClient : IDisposable, ISmartHomeClient
     {
-        private IDeviceManager deviceManager;
-        private System.Timers.Timer timer;
-        private Socket socket;
-        private Task scannerThread;
-        private CancellationTokenSource cancellationTokenSource;
-        private bool isRunning;
+        private IDeviceManager _deviceManager;
+        private System.Timers.Timer _timer;
+        private Socket _socket;
+        private Task _scannerThread;
+        private CancellationTokenSource _cancellationTokenSource;
+        private bool _isRunning;
 
         // Socket
-        private IPAddress multicastAddress;
-        private int multicastPort;
+        private IPAddress _multicastAddress;
+        private int _multicastPort;
 
-        private IPEndPoint multicastEp;
-        private IPEndPoint localEp;
+        private IPEndPoint _multicastEp;
+        private IPEndPoint _localEp;
 
-        public SmartHomeClient()
+        public SmartHomeClient(DeviceType[] deviceTypeFilter = null)
         {
             DiscoveryRate = TimeSpan.FromSeconds(30);
-            DeviceTypeFilter = null;
+            SetDeviceTypeFilter(deviceTypeFilter);
 
             InitializeDeviceManager();
         }
 
         private void InitializeDeviceManager()
         {
-            deviceManager = new DeviceManager();
-            deviceManager.RegisterDeviceTypeProvider(LightBulbProvider.Instance);
-            deviceManager.RegisterDeviceTypeProvider(PlugProvider.Instance);
+            _deviceManager = new DeviceManager();
+            _deviceManager.RegisterDeviceTypeProvider(LightBulbProvider.Instance);
+            _deviceManager.RegisterDeviceTypeProvider(PlugProvider.Instance);
         }
 
         public static Socket CreateSocket(EndPoint localEp)
         {
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socket.EnableBroadcast = true;
-            socket.MulticastLoopback = false;
+            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
+            {
+                EnableBroadcast = true,
+                MulticastLoopback = false
+            };
 
             socket.Bind(localEp);
 
@@ -58,18 +59,15 @@ namespace SmartHome
 
         private void Initialize()
         {
-            multicastAddress = IPAddress.Broadcast;
-            multicastPort = 9999;
-            multicastEp = new IPEndPoint(multicastAddress, multicastPort);
-            localEp = new IPEndPoint(IPAddress.Any, multicastPort);
+            _multicastAddress = IPAddress.Broadcast;
+            _multicastPort = 9999;
+            _multicastEp = new IPEndPoint(_multicastAddress, _multicastPort);
+            _localEp = new IPEndPoint(IPAddress.Any, _multicastPort);
 
-            socket = CreateSocket(localEp);
+            _socket = CreateSocket(_localEp);
 
-            timer = new System.Timers.Timer(DiscoveryRate.TotalMilliseconds);
-            timer.Elapsed += (s, e) =>
-            {
-                Scan();
-            };
+            _timer = new System.Timers.Timer(DiscoveryRate.TotalMilliseconds);
+            _timer.Elapsed += (s, e) => Scan();
         }
 
         public void Start()
@@ -78,42 +76,45 @@ namespace SmartHome
             StartScannerThread();
             Scan();
 
-            isRunning = true;
-            timer.Start();
+            _isRunning = true;
+            _timer.Start();
         }
 
         private void StartScannerThread()
         {
-            EndPoint localEp = this.localEp;
+            EndPoint localEp = _localEp;
 
-            cancellationTokenSource = new CancellationTokenSource();
-            CancellationToken ct = cancellationTokenSource.Token;
-            scannerThread = Task.Run(async () =>
+            _cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken ct = _cancellationTokenSource.Token;
+            _scannerThread = Task.Run(async () =>
             {
                 while (!ct.IsCancellationRequested)
                 {
                     try
                     {
-                        var response = new byte[8000];
-                        var no = socket.ReceiveFrom(response, ref localEp);
-                        var str = Encoding.UTF8.GetString(Decrypt(response.Take(no).ToArray()));
+                        byte[] response = new byte[8000];
+                        int no = _socket.ReceiveFrom(response, ref localEp);
+                        string str = Encoding.UTF8.GetString(Decrypt(response.Take(no).ToArray()));
 
-                        var obj = ParserHelpers.ParseGetSysInfo(str);
+                        JObject obj = ParserHelpers.ParseGetSysInfo(str);
 
-                        if (obj == null) continue;
+                        if (obj == null)
+                        {
+                            continue;
+                        }
 
-                        var deviceType = ParserHelpers.GetDeviceType(obj);
+                        DeviceType deviceType = ParserHelpers.GetDeviceType(obj);
 
-                        if (DeviceTypeFilter != null && !DeviceTypeFilter.Contains(deviceType))
+                        if (GetDeviceTypeFilter()?.Contains(deviceType) == false)
                         {
                             Debug.WriteLine("Excluded device");
                             continue;
                         }
 
-                        var requestContext = new RequestContext(obj, (localEp as IPEndPoint).Address);
-                        DeviceStateInfo state = await deviceManager.AddOrUpdate(requestContext);
+                        var requestContext = new RequestContext(obj, (localEp as IPEndPoint)?.Address);
+                        DeviceStateInfo state = await _deviceManager.AddOrUpdate(requestContext).ConfigureAwait(false);
 
-                        switch(state.State)
+                        switch (state.State)
                         {
                             case DeviceState.Added:
                                 DeviceDiscovered?.Invoke(this, new DeviceEventArgs(state.Device));
@@ -132,81 +133,74 @@ namespace SmartHome
             }, ct);
         }
 
-        public IEnumerable<Device> GetDevices() => deviceManager.GetDevices();
+        public IEnumerable<Device> GetDevices() => _deviceManager.GetDevices();
 
         public void Stop()
         {
-            timer.Stop();
-            socket.Close();
-            cancellationTokenSource.Cancel();
-            isRunning = false;
+            _timer.Stop();
+            _socket.Close();
+            _cancellationTokenSource.Cancel();
+            _isRunning = false;
         }
 
         public void Scan()
         {
-            var obj = Commands.GetSysInfo;
-            var enc = Encoding.UTF8.GetBytes(obj);
-            var a = EncryptionHelpers.Encrypt(enc);
-            socket.SendTo(a, 0, a.Length, SocketFlags.None, multicastEp);
+            string obj = Commands.GetSysInfo;
+            byte[] enc = Encoding.UTF8.GetBytes(obj);
+            byte[] a = EncryptionHelpers.Encrypt(enc);
+            _socket.SendTo(a, 0, a.Length, SocketFlags.None, _multicastEp);
         }
 
         public TimeSpan DiscoveryRate { get; set; }
 
-        public DeviceType[] DeviceTypeFilter
+        public DeviceType[] GetDeviceTypeFilter()
         {
-            get => _deviceTypeFilter;
-            set
-            {
-                if (IsRunning)
-                { 
-                    throw new InvalidOperationException("Cannot set filter when running.");
-                }
-                _deviceTypeFilter = value;
-            }
+            return _deviceTypeFilter;
         }
 
-        public bool IsRunning => isRunning;
+        public void SetDeviceTypeFilter(DeviceType[] value)
+        {
+            if (IsRunning)
+            {
+                throw new InvalidOperationException("Cannot set filter when running.");
+            }
+            _deviceTypeFilter = value;
+        }
+
+        public bool IsRunning => _isRunning;
 
         public event EventHandler<DeviceEventArgs> DeviceDiscovered;
 
         public event EventHandler<DeviceEventArgs> DeviceUpdated;
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool _disposedValue = false; // To detect redundant calls
         private DeviceType[] _deviceTypeFilter;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposedValue)
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
                     Stop();
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-
-                disposedValue = true;
+                _disposedValue = true;
             }
         }
 
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~HS100Client() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
-
-        // This code added to correctly implement the disposable pattern.
-        void IDisposable.Dispose()
+        ~SmartHomeClient()
         {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
+            Dispose(false);
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         #endregion
     }
-
 }

@@ -1,27 +1,29 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Linq;
-using SmartHome.Devices;
-using System;
-using static SmartHome.ParserHelpers;
+﻿using System.Net;
 using System.Threading.Tasks;
-using System.Net;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using SmartHome.Devices;
+using static SmartHome.ParserHelpers;
 
 namespace SmartHome
 {
+#pragma warning disable CA1012 // Abstract types should not have constructors
     public abstract class Device
+#pragma warning restore CA1012 // Abstract types should not have constructors
     {
-        private SmartHomeClient client;
-        private DeviceTypeProvider deviceTypeProvider;
+        private readonly SmartHomeClient _client;
+        private DeviceTypeProvider _deviceTypeProvider;
 
+#pragma warning disable RCS1160 // Abstract type should not have public constructors.
         public Device()
+#pragma warning restore RCS1160 // Abstract type should not have public constructors.
         {
             Type = DeviceType.Unknown;
         }
 
         internal Device(SmartHomeClient client) : this()
         {
-            this.client = client;
+            _client = client;
         }
 
         public string Alias { get; internal set; }
@@ -56,16 +58,15 @@ namespace SmartHome
 
         public bool IsUpdating { get; internal set; }
 
-
         public async Task SetAliasAsync(string alias)
         {
-            await SendCommand(Commands.SetDeviceAlias(alias));
+            await SendCommand(Commands.SetDeviceAlias(alias)).ConfigureAwait(false);
             Alias = alias;
         }
 
         public async Task SetDeviceIdAsync(string id)
         {
-            await SendCommand(Commands.SetDeviceId(id));
+            await SendCommand(Commands.SetDeviceId(id)).ConfigureAwait(false);
             DeviceId = id;
         }
 
@@ -78,14 +79,13 @@ namespace SmartHome
 
         public async Task FetchAsync()
         {
-            deviceTypeProvider = deviceTypeProvider ?? this.GetDeviceTypeProvider();
+            _deviceTypeProvider = _deviceTypeProvider ?? this.GetDeviceTypeProvider();
 
-            var str = await SendCommand(Commands.GetSysInfo);
-            var obj = ParseGetSysInfo(str);
+            string str = await SendCommand(Commands.GetSysInfo).ConfigureAwait(false);
+            Newtonsoft.Json.Linq.JObject obj = ParseGetSysInfo(str);
 
             var requestContext = new RequestContext(obj, IPAddress);
-            await deviceTypeProvider.UpdateDevice(this, requestContext);
+            await _deviceTypeProvider.UpdateDevice(this, requestContext).ConfigureAwait(false);
         }
     }
-
 }

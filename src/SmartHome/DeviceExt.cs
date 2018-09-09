@@ -1,13 +1,12 @@
 ﻿using System.Linq;
-using System.Threading.Tasks;
 
 namespace SmartHome
 {
     public static class DeviceExt
-    { 
+    {
         public static DeviceTypeProvider GetDeviceTypeProvider(this Device device)
         {
-            var deviceTypeProviderAttribute = device.GetType()
+            DeviceTypeProviderAttribute deviceTypeProviderAttribute = device.GetType()
                 .GetCustomAttributes(false)
                 .OfType<DeviceTypeProviderAttribute>()
                 .Single();
@@ -17,5 +16,4 @@ namespace SmartHome
                 .GetValue(null);
         }
     }
-
 }

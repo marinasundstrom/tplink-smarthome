@@ -8,9 +8,9 @@ namespace SmartHome
     {
         public static byte[] Encrypt(byte[] input, byte key = 0xAB)
         {
-            for (var i = 0; i < input.Length; i++)
+            for (int i = 0; i < input.Length; i++)
             {
-                var c = input[i];
+                byte c = input[i];
                 input[i] = (byte)(c ^ key);
                 key = input[i];
             }
@@ -19,9 +19,9 @@ namespace SmartHome
 
         public static byte[] Decrypt(byte[] buffer, byte key = 0xAB)
         {
-            for (var i = 0; i < buffer.Length; i++)
+            for (int i = 0; i < buffer.Length; i++)
             {
-                var c = buffer[i];
+                byte c = buffer[i];
                 buffer[i] = (byte)(c ^ key);
                 key = c;
             }

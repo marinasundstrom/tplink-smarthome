@@ -1,44 +1,50 @@
-﻿using Newtonsoft.Json;
-using SmartHome;
-using SmartHome.Devices;
-using System;
+﻿using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using SmartHome;
+using SmartHome.Devices;
 
 namespace TestApp
 {
-    class Program
+    internal static class Program
     {
-        static async Task Main(string[] args)
+        private static void Main()
         {
             Test();
         }
 
+#pragma warning disable RCS1213 // Remove unused member declaration.
         private static async Task Main2()
+#pragma warning restore RCS1213 // Remove unused member declaration.
         {
             using (var client = new SmartHomeClient())
             {
                 client.Start();
 
-                await Task.Delay(1000);
+                await Task.Delay(1000).ConfigureAwait(false);
 
                 Console.WriteLine("Client initialized.");
 
                 while (true)
                 {
                     Console.Write("Command: ");
-                    var command = Console.ReadLine();
-                    if (command?.ToLower() == "exit") return;
-                    foreach (var device in client.GetDevices())
+                    string command = Console.ReadLine();
+                    if (command?.ToLower() == "exit")
+                    {
+                        return;
+                    }
+
+                    foreach (Device device in client.GetDevices())
                     {
                         if (device is LightBulb lb)
                         {
-                            var state = string.Equals(command, "x", StringComparison.CurrentCultureIgnoreCase) ? SwitchState.On : SwitchState.Off;
+                            SwitchState state = string.Equals(command, "x", StringComparison.CurrentCultureIgnoreCase) ? SwitchState.On : SwitchState.Off;
 
-                            await lb.TransitionStateAsync(state);
+                            await lb.TransitionStateAsync(state).ConfigureAwait(false);
 
-                            var state2 = lb.State;
+                            LightBulbState state2 = lb.State;
 
                             Console.WriteLine($"{lb.Alias} ({lb.DeviceId}): {state2.PowerState}");
                         }
@@ -47,7 +53,7 @@ namespace TestApp
             }
         }
 
-        static void Test()
+        private static void Test()
         {
             using (var client = new SmartHomeClient())
             {
@@ -64,76 +70,90 @@ namespace TestApp
             }
         }
 
-        async static Task Test2()
+#pragma warning disable RCS1213 // Remove unused member declaration.
+        private static async Task Test2()
+#pragma warning restore RCS1213 // Remove unused member declaration.
         {
             using (var client = new SmartHomeClient())
             {
                 client.Start();
 
-                await Task.Delay(1000);
+                await Task.Delay(1000).ConfigureAwait(false);
 
-                var devices = client
+                System.Collections.Generic.IEnumerable<Device> devices = client
                        .GetDevices();
-                var bulb = devices.OfType<LightBulb>().First();
+                LightBulb bulb = devices.OfType<LightBulb>().First();
 
                 while (true)
                 {
                     Console.Write($"Brightness ({bulb.State.Brightness}): ");
-                    var value = Console.ReadLine();
-                    if (string.Equals(value, "exit", StringComparison.CurrentCultureIgnoreCase)) break;
+                    string value = Console.ReadLine();
+                    if (string.Equals(value, "exit", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        break;
+                    }
+
                     await bulb.TransitionStateAsync(new RequestedBulbState()
                     {
                         PowerState = SwitchState.On,
                         Brightness = int.Parse(value)
-                    });
+                    }).ConfigureAwait(false);
                     Console.Clear();
                 }
 
-                await bulb.TransitionStateAsync(SwitchState.Off);
+                await bulb.TransitionStateAsync(SwitchState.Off).ConfigureAwait(false);
 
                 Console.WriteLine("Press any key to exit...");
                 Console.Read();
             }
         }
 
-        async static Task Test3()
+#pragma warning disable RCS1213 // Remove unused member declaration.
+        private static async Task Test3()
+#pragma warning restore RCS1213 // Remove unused member declaration.
         {
             using (var client = new SmartHomeClient())
             {
                 client.Start();
 
-                await Task.Delay(1000);
+                await Task.Delay(1000).ConfigureAwait(false);
 
-                var devices = client
+                System.Collections.Generic.IEnumerable<Device> devices = client
                        .GetDevices();
-                var bulb = devices.OfType<Plug>().First();
+                Plug bulb = devices.OfType<Plug>().First();
 
                 while (true)
                 {
                     Console.Write($"State ({bulb.RelayState}): ");
-                    var value = Console.ReadLine();
-                    if (string.Equals(value, "exit", StringComparison.CurrentCultureIgnoreCase)) break;
-                    if (bool.TryParse(value, out var flag))
+                    string value = Console.ReadLine();
+                    if (string.Equals(value, "exit", StringComparison.CurrentCultureIgnoreCase))
                     {
-                        await bulb.SetRelayStateAsync(flag ? SwitchState.On : SwitchState.Off);
+                        break;
+                    }
+
+                    if (bool.TryParse(value, out bool flag))
+                    {
+                        await bulb.SetRelayStateAsync(flag ? SwitchState.On : SwitchState.Off).ConfigureAwait(false);
                     }
                     Console.Clear();
                 }
 
-                await bulb.SetRelayStateAsync(SwitchState.Off);
+                await bulb.SetRelayStateAsync(SwitchState.Off).ConfigureAwait(false);
 
                 Console.WriteLine("Press any key to exit...");
                 Console.Read();
             }
         }
 
-        async static Task Test4(string[] args)
+#pragma warning disable RCS1213 // Remove unused member declaration.
+        private static async Task Test4(string[] args)
+#pragma warning restore RCS1213 // Remove unused member declaration.
         {
-            var desiredState = Enum.Parse<SwitchState>(args[0], true);
+            SwitchState desiredState = Enum.Parse<SwitchState>(args[0], true);
 
             var bulb = new LightBulb(IPAddress.Parse("192.168.1.7"));
             //await bulb.FetchAsync();
-            await bulb.TransitionStateAsync(desiredState);
+            await bulb.TransitionStateAsync(desiredState).ConfigureAwait(false);
         }
     }
 }

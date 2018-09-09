@@ -2,7 +2,8 @@
 
 namespace SmartHome
 {
-    public class DeviceTypeProviderAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    public sealed class DeviceTypeProviderAttribute : Attribute
     {
         public DeviceTypeProviderAttribute(Type providerType)
         {

@@ -1,24 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SmartHome
+﻿namespace SmartHome
 {
     public sealed class NotificationBus
     {
-        private static NotificationBus instance;
+        private static NotificationBus s_instance;
 
-        protected NotificationBus()
-        {
-
-        }
-
-        public void NotifyDeviceAdded(Device device)
-        {
-
-        }
-
-        public void NotifyDeviceUpdated(Device device)
+        private NotificationBus()
         {
 
         }
@@ -27,11 +13,7 @@ namespace SmartHome
         {
             get
             {
-                if(instance == null)
-                {
-                    instance = new NotificationBus();
-                }
-                return instance;
+                return s_instance ?? (s_instance = new NotificationBus());
             }
         }
     }

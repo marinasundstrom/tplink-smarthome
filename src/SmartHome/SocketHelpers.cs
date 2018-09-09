@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SmartHome
 {
-    static class SocketHelpers
+    internal static class SocketHelpers
     {
         public static UdpClient CreateUdpClient() => new UdpClient(9998);
 
         public static async Task<byte[]> Send(IPAddress ipAddress, byte[] data)
         {
-            using (var client = CreateUdpClient())
+            using (UdpClient client = CreateUdpClient())
             {
-                return await Send(client, ipAddress, data);
+                return await Send(client, ipAddress, data).ConfigureAwait(false);
             }
         }
 
@@ -23,7 +20,7 @@ namespace SmartHome
         {
             client.MulticastLoopback = false;
             var remoteEp = new IPEndPoint(ipAddress, 9999);
-            await client.SendAsync(data, data.Length, remoteEp);
+            await client.SendAsync(data, data.Length, remoteEp).ConfigureAwait(false);
             return client.Receive(ref remoteEp);
         }
     }

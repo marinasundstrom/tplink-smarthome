@@ -1,18 +1,11 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
+﻿using System.Net;
 using System.Threading.Tasks;
-using static SmartHome.CommandHelper;
-using static SmartHome.ParserHelpers;
 
 namespace SmartHome.Devices
 {
     [DeviceTypeProvider(typeof(PlugProvider))]
     public sealed class Plug : Device
     {
-
         internal Plug()
         {
             Type = DeviceType.Plug;
@@ -33,7 +26,8 @@ namespace SmartHome.Devices
         public async Task SetRelayStateAsync(SwitchState state)
         {
             await SendCommand(
-                Commands.SetRelayState(state == SwitchState.On));
+                Commands.SetRelayState(state == SwitchState.On))
+                .ConfigureAwait(false);
             RelayState = state;
         }
     }

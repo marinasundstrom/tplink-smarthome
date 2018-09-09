@@ -1,15 +1,15 @@
-﻿using Microsoft.Extensions.CommandLineUtils;
-using Newtonsoft.Json;
-using SmartHome;
-using SmartHome.Devices;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.CommandLineUtils;
+using Newtonsoft.Json;
+using SmartHome;
+using SmartHome.Devices;
 
 namespace SHClient
 {
-    static class Program
+    internal static class Program
     {
         private static int Main(string[] args)
         {
@@ -19,13 +19,13 @@ namespace SHClient
                 command.Description = "Control a Smart Home plug.";
                 command.HelpOption("-?|-h|--help");
 
-                var targetArgument = command.Argument("[target]",
+                CommandArgument targetArgument = command.Argument("[target]",
                                         "The address of the plug to control.");
 
-                var stateOption = command.Option("-s|--state",
+                CommandOption stateOption = command.Option("-s|--state",
                                         "Sets the on/off state of the plug.", CommandOptionType.SingleValue);
 
-                var jsonOption = command.Option("--json",
+                CommandOption jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
                 command.OnExecute(async () =>
@@ -35,7 +35,7 @@ namespace SHClient
                     if (jsonOption.HasValue())
                     {
                         var plug = new Plug(address);
-                        await plug.FetchAsync();
+                        await plug.FetchAsync().ConfigureAwait(false);
                         Console.WriteLine(JsonConvert.SerializeObject(plug, Formatting.Indented));
                     }
                     else
@@ -51,14 +51,14 @@ namespace SHClient
                         var plug = new Plug(address);
                         if (shouldToggleState)
                         {
-                            await plug.FetchAsync();
+                            await plug.FetchAsync().ConfigureAwait(false);
                             desiredState = plug.RelayState == SwitchState.Off ? SwitchState.On : SwitchState.Off;
                         }
                         else if (!Enum.TryParse(stateOption.Value(), true, out desiredState))
                         {
                             throw new Exception("Invalid value for parameter \"state\".");
                         }
-                        await plug.SetRelayStateAsync(desiredState);
+                        await plug.SetRelayStateAsync(desiredState).ConfigureAwait(false);
                     }
                     return 0;
                 });
@@ -68,16 +68,16 @@ namespace SHClient
                 command.Description = "Control a Smart Home bulb.";
                 command.HelpOption("-?|-h|--help");
 
-                var targetArgument = command.Argument("[target]",
+                CommandArgument targetArgument = command.Argument("[target]",
                                         "The address of the bulb to control.");
 
-                var stateOption = command.Option("-s|--state",
+                CommandOption stateOption = command.Option("-s|--state",
                                         "Sets the on/off state of the light bulb.", CommandOptionType.SingleValue);
 
-                var brightnessOption = command.Option("-b|--brightness",
+                CommandOption brightnessOption = command.Option("-b|--brightness",
                                         "Sets the brightness of the light bulb.", CommandOptionType.SingleValue);
 
-                var jsonOption = command.Option("--json",
+                CommandOption jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
                 command.OnExecute(async () =>
@@ -87,7 +87,7 @@ namespace SHClient
                     if (jsonOption.HasValue())
                     {
                         var bulb = new LightBulb(address);
-                        await bulb.FetchAsync();
+                        await bulb.FetchAsync().ConfigureAwait(false);
                         Console.WriteLine(JsonConvert.SerializeObject(bulb, Formatting.Indented));
                     }
                     else
@@ -126,10 +126,10 @@ namespace SHClient
                         var bulb = new LightBulb(address);
                         if (shouldToggleState)
                         {
-                            await bulb.FetchAsync();
+                            await bulb.FetchAsync().ConfigureAwait(false);
                             desiredState.PowerState = bulb.State.PowerState == SwitchState.Off ? SwitchState.On : SwitchState.Off;
                         }
-                        await bulb.TransitionStateAsync(desiredState);
+                        await bulb.TransitionStateAsync(desiredState).ConfigureAwait(false);
                     }
                     return 0;
                 });
@@ -139,10 +139,10 @@ namespace SHClient
                 command.Description = "Watches for Smart Home devices on the network.";
                 command.HelpOption("-?|-h|--help");
 
-                var filterOption = command.Option("-f|--filter",
+                CommandOption filterOption = command.Option("-f|--filter",
                                         "Sets the filter.", CommandOptionType.MultipleValue);
 
-                var jsonOption = command.Option("--json",
+                CommandOption jsonOption = command.Option("--json",
                                         "Output device info in JSON.", CommandOptionType.NoValue);
 
                 command.OnExecute(async () =>
@@ -151,17 +151,13 @@ namespace SHClient
 
                     if (filterOption.HasValue())
                     {
-                        DeviceType filterType;
-
-                        if (Enum.TryParse(filterOption.Value(), true, out filterType))
+                        if (Enum.TryParse(filterOption.Value(), true, out DeviceType filterType))
                         {
-                            if(deviceFilter == null) deviceFilter = new List<DeviceType>();
-
-                            deviceFilter.Add(filterType);
+                            (deviceFilter ?? (deviceFilter = new List<DeviceType>())).Add(filterType);
                         }
                     }
 
-                    using (var client = new SmartHomeClient() { DeviceTypeFilter = deviceFilter?.ToArray() })
+                    using (var client = new SmartHomeClient(deviceFilter?.ToArray()))
                     {
                         client.DeviceDiscovered += (s, e) =>
                         {
@@ -175,13 +171,13 @@ namespace SHClient
                                 Console.WriteLine($"{e.Device.Type,-20}{e.Device.Alias,-20}{e.Device.IPAddress} ");
                             }
                         };
-                        client.DeviceUpdated += (s, e) =>
-                        {
-                            Console.WriteLine($"Device updated: {e.Device.Alias}");
-                        };
+                        client.DeviceUpdated += (s, e) => Console.WriteLine($"Device updated: {e.Device.Alias}");
                         client.Start();
 
-                        while (true) await Task.Delay(1000);
+                        while (true)
+                        {
+                            await Task.Delay(1000).ConfigureAwait(false);
+                        }
                     }
                 });
             });
