@@ -18,6 +18,8 @@ namespace SmartHome.Devices
             SetCommonDeviceProperties(device, requestContext);
             SetBulbProperties(device, requestContext.Data);
 
+            UpdateBulbState(device as LightBulb, requestContext.Data.Value<JObject>("light_state"));
+
             return Task.FromResult<Device>(device);
         }
 

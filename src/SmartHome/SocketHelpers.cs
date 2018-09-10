@@ -6,14 +6,13 @@ namespace SmartHome
 {
     internal static class SocketHelpers
     {
-        public static UdpClient CreateUdpClient() => new UdpClient(9998);
+        private static UdpClient s_client;
 
-        public static async Task<byte[]> Send(IPAddress ipAddress, byte[] data)
+        public static UdpClient GetUdpClient() => s_client ?? (s_client = new UdpClient(9998));
+
+        public static Task<byte[]> Send(IPAddress ipAddress, byte[] data)
         {
-            using (UdpClient client = CreateUdpClient())
-            {
-                return await Send(client, ipAddress, data).ConfigureAwait(false);
-            }
+            return Send(GetUdpClient(), ipAddress, data);
         }
 
         public static async Task<byte[]> Send(UdpClient client, IPAddress ipAddress, byte[] data)

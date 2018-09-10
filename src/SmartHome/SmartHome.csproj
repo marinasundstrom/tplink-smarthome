@@ -6,7 +6,7 @@
     <Authors>Robert Sundström</Authors>
     <Product>TP-Link Smart Home</Product>
     <PackageId>TPLink-SmartHome</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>

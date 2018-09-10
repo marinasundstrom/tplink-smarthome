@@ -22,6 +22,6 @@ namespace SmartHome
 
         public static Task<string> SendCommand(
             IPAddress ipAddress, string command) =>
-                SendCommand(SocketHelpers.CreateUdpClient(), ipAddress, command);
+                SendCommand(SocketHelpers.GetUdpClient(), ipAddress, command);
     }
 }
