@@ -11,9 +11,9 @@ namespace SmartHome
                 .OfType<DeviceTypeProviderAttribute>()
                 .Single();
 
-            return (DeviceTypeProvider)deviceTypeProviderAttribute.ProviderType
-                .GetProperty("Instance", System.Reflection.BindingFlags.Static)
-                .GetValue(null);
+            System.Reflection.PropertyInfo prop = deviceTypeProviderAttribute.ProviderType
+                .GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            return (DeviceTypeProvider)prop.GetValue(null);
         }
     }
 }
