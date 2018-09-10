@@ -13,7 +13,7 @@ using static SmartHome.EncryptionHelpers;
 
 namespace SmartHome
 {
-    public class SmartHomeClient : IDisposable, ISmartHomeClient
+    public class SmartHomeClient : ISmartHomeClient
     {
         private IDeviceManager _deviceManager;
         private System.Timers.Timer _timer;
@@ -133,7 +133,7 @@ namespace SmartHome
             }, ct);
         }
 
-        public IEnumerable<Device> GetDevices() => _deviceManager.GetDevices();
+        public IEnumerable<IDevice> GetDevices() => _deviceManager.GetDevices();
 
         public void Stop()
         {
@@ -147,7 +147,7 @@ namespace SmartHome
         {
             string obj = Commands.GetSysInfo;
             byte[] enc = Encoding.UTF8.GetBytes(obj);
-            byte[] a = EncryptionHelpers.Encrypt(enc);
+            byte[] a = Encrypt(enc);
             _socket.SendTo(a, 0, a.Length, SocketFlags.None, _multicastEp);
         }
 

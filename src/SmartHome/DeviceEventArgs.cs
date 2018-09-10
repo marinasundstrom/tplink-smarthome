@@ -4,11 +4,11 @@ namespace SmartHome
 {
     public class DeviceEventArgs : EventArgs
     {
-        public DeviceEventArgs(Device device)
+        public DeviceEventArgs(IDevice device)
         {
             Device = device;
         }
 
-        public Device Device { get; set; }
+        public IDevice Device { get; set; }
     }
 }

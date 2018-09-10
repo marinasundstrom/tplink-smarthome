@@ -8,7 +8,7 @@ using static SmartHome.ParserHelpers;
 namespace SmartHome
 {
 #pragma warning disable CA1012 // Abstract types should not have constructors
-    public abstract class Device
+    public abstract class Device : IDevice
 #pragma warning restore CA1012 // Abstract types should not have constructors
     {
         private readonly SmartHomeClient _client;

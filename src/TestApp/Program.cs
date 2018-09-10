@@ -80,7 +80,7 @@ namespace TestApp
 
                 await Task.Delay(1000).ConfigureAwait(false);
 
-                System.Collections.Generic.IEnumerable<Device> devices = client
+                System.Collections.Generic.IEnumerable<IDevice> devices = client
                        .GetDevices();
                 LightBulb bulb = devices.OfType<LightBulb>().First();
 
@@ -118,7 +118,7 @@ namespace TestApp
 
                 await Task.Delay(1000).ConfigureAwait(false);
 
-                System.Collections.Generic.IEnumerable<Device> devices = client
+                System.Collections.Generic.IEnumerable<IDevice> devices = client
                        .GetDevices();
                 Plug bulb = devices.OfType<Plug>().First();
 

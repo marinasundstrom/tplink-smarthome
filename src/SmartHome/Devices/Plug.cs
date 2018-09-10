@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace SmartHome.Devices
 {
     [DeviceTypeProvider(typeof(PlugProvider))]
-    public sealed class Plug : Device
+    public sealed class Plug : Device, IPlug
     {
         internal Plug()
         {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SmartHome
 {
-    public interface ISmartHomeClient
+    public interface ISmartHomeClient : IDisposable
     {
         TimeSpan DiscoveryRate { get; set; }
         bool IsRunning { get; }
@@ -11,7 +11,7 @@ namespace SmartHome
         event EventHandler<DeviceEventArgs> DeviceDiscovered;
         event EventHandler<DeviceEventArgs> DeviceUpdated;
 
-        IEnumerable<Device> GetDevices();
+        IEnumerable<IDevice> GetDevices();
         void Scan();
         void Start();
         void Stop();

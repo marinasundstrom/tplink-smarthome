@@ -7,7 +7,7 @@ using static SmartHome.ParserHelpers;
 namespace SmartHome.Devices
 {
     [DeviceTypeProvider(typeof(LightBulbProvider))]
-    public class LightBulb : Device
+    public class LightBulb : Device, ILightBulb
     {
         internal LightBulb()
         {
